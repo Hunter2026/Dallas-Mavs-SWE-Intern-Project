@@ -3,25 +3,31 @@ import { useParams, Link } from 'react-router-dom';
 
 const StatsMeasurementsPage = () => {
     const { id } = useParams();
+
+    // States for player data
     const [player, setPlayer] = useState(null);
     const [measurements, setMeasurements] = useState(null);
     const [gameLogs, setGameLogs] = useState([]);
     const [availableSeasons, setAvailableSeasons] = useState([]);
     const [selectedSeason, setSelectedSeason] = useState(null);
-    const [sortByStat, setSortByStat] = useState(null);
+    const [sortByStat, setSortByStat] = useState(null); // Controls stat-based sorting
 
+    // Fetch data on mount
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
+                // Find player profile
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
                 setPlayer(foundPlayer);
 
+                // Get measurement data
                 const foundMeasurements = data.measurements?.find(
                     m => m.playerId?.toString() === id
                 );
                 setMeasurements(foundMeasurements);
 
+                // Get game logs and available seasons
                 const gameLogsForPlayer = data.game_logs?.filter(
                     g => g.playerId?.toString() === id
                 ) || [];
@@ -36,16 +42,17 @@ const StatsMeasurementsPage = () => {
 
     if (!player) return <p>Loading player data...</p>;
 
+    // Filter logs to only the selected season
     const filteredLogs = gameLogs.filter(g => g.season === selectedSeason);
-
     let displayedLogs = [...filteredLogs];
 
+    // Sort logs if stat is selected
     if (sortByStat) {
         displayedLogs.sort((a, b) => {
             let valA, valB;
 
             if (sortByStat === 'timePlayed') {
-                // Convert "MM:SS" string to a numeric value
+                // Convert "MM:SS" to a numeric value for minutes
                 const toMinutes = (str) => {
                     if (!str || !str.includes(':')) return -Infinity;
                     const [min, sec] = str.split(':').map(Number);
@@ -62,15 +69,16 @@ const StatsMeasurementsPage = () => {
         });
     }
 
-
     return (
         <div style={{ padding: '1rem' }}>
+            {/* Navigation back to player profile */}
             <Link to={`/player/${player.playerId}`} style={{ display: 'inline-block', marginBottom: '1rem' }}>
                 ← Back to Player Profile
             </Link>
 
             <h2>{player.name} – Measurements</h2>
 
+            {/* Display physical and athletic measurements */}
             {measurements ? (
                 <ul>
                     <li><strong>Height (No Shoes):</strong> {measurements.heightNoShoes}"</li>
@@ -93,6 +101,7 @@ const StatsMeasurementsPage = () => {
 
             <h2 style={{ marginTop: '2rem' }}>{player.name} – Game Logs</h2>
 
+            {/* Season selector */}
             {availableSeasons.length > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
                     <label htmlFor="seasonSelect"><strong>Select Season:</strong>{' '}</label>
@@ -108,6 +117,7 @@ const StatsMeasurementsPage = () => {
                 </div>
             )}
 
+            {/* Stat filter dropdown */}
             <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="statSort"><strong>Sort By Stat:</strong>{' '}</label>
                 <select
@@ -134,6 +144,7 @@ const StatsMeasurementsPage = () => {
                 </select>
             </div>
 
+            {/* Game logs table */}
             {displayedLogs.length === 0 ? (
                 <p>No game logs available for the selected season.</p>
             ) : (
