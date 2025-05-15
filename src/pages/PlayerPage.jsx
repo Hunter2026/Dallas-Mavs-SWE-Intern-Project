@@ -29,6 +29,23 @@ const PlayerPage = () => {
         }
     };
 
+    const calculateAge = (birthDateString) => {
+        const birthDate = new Date(birthDateString);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+
+        const hasHadBirthdayThisYear =
+            today.getMonth() > birthDate.getMonth() ||
+            (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+
+        if (!hasHadBirthdayThisYear) {
+            age -= 1;
+        }
+
+        return age;
+    };
+
+
     // Show loading state while data is being fetched
     if (!player) return <p>Loading...</p>;
 
@@ -45,6 +62,7 @@ const PlayerPage = () => {
                 <img src={player.photoUrl} alt={player.name} width="150" />
             )}
             <p><strong>Current Team:</strong> {player.currentTeam}</p>
+            <p><strong>Age:</strong> {calculateAge(player.birthDate)}</p>
             <p>
                 <strong>Height:</strong>{' '}
                 {Math.floor(player.height / 12)}&apos; {player.height % 12}&quot;
@@ -53,6 +71,10 @@ const PlayerPage = () => {
             <p>
                 <strong>Hometown:</strong> {player.homeTown}, {player.homeState || player.homeCountry}
             </p>
+
+            <Link to={`/player/${player.playerId}/stats`}>
+                <button style={{ marginTop: '1rem' }}>View Stats & Measurements</button>
+            </Link>
 
             {/* Scout Rankings Display */}
             <h3>Mavericks Scout Rankings</h3>

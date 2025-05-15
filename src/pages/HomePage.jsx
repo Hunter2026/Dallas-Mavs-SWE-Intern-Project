@@ -1,52 +1,65 @@
 import React, { useEffect, useState } from 'react';
 import PlayerCard from '../components/PlayerCard.jsx';
 
-// HomePage component displays the main Big Board with all ranked players
 const HomePage = () => {
     const [players, setPlayers] = useState([]);
+    const [sortBy, setSortBy] = useState('average'); // 'average' or a specific scout name like 'ESPN Rank'
 
     useEffect(() => {
-        // Fetch player bios and scout rankings from the local JSON file
         fetch('/intern_project_data.json')
             .then((res) => res.json())
             .then((data) => {
-                // Merge scout rankings into each player object by matching playerId
-                const rankedPlayers = data.bio.map(player => {
-                    const ranking = data.scoutRankings.find(
-                        r => r.playerId === player.playerId
-                    );
+                const merged = data.bio.map(player => {
+                    const ranking = data.scoutRankings.find(r => r.playerId === player.playerId);
                     return { ...player, scoutRankings: ranking };
                 });
 
-                // Sort players by average rank across all scouts (lower = better)
-                const sorted = rankedPlayers.sort((a, b) => {
-                    const avgA = getAvgRank(a.scoutRankings);
-                    const avgB = getAvgRank(b.scoutRankings);
-                    return avgA - avgB;
+                const sorted = [...merged].sort((a, b) => {
+                    const rankA = getRankValue(a.scoutRankings, sortBy);
+                    const rankB = getRankValue(b.scoutRankings, sortBy);
+                    return rankA - rankB;
                 });
 
-                // Save the sorted player list to state
                 setPlayers(sorted);
             });
-    }, []);
+    }, [sortBy]); // Re-run when sortBy changes
 
-    // Helper function to calculate average scout ranking for a player
-    // Skips non-numeric values and the "playerId" key
-    const getAvgRank = (rankings = {}) => {
-        const values = Object.entries(rankings)
-            .filter(([key, value]) => key !== 'playerId' && typeof value === 'number')
-            .map(([_, value]) => value);
+    // Helper to get rank by selected method
+    const getRankValue = (rankings = {}, key) => {
+        if (!rankings) return Infinity;
 
-        if (values.length === 0) return Infinity; // Unranked players go to the bottom
-        const total = values.reduce((sum, rank) => sum + rank, 0);
-        return total / values.length;
+        if (key === 'average') {
+            const values = Object.entries(rankings)
+                .filter(([k, v]) => k !== 'playerId' && typeof v === 'number');
+            if (values.length === 0) return Infinity;
+            const sum = values.reduce((acc, [_, val]) => acc + val, 0);
+            return sum / values.length;
+        }
+
+        return typeof rankings[key] === 'number' ? rankings[key] : Infinity;
     };
 
     return (
         <div>
             <h1>NBA Draft Big Board</h1>
 
-            {/* Render PlayerCard for each sorted player */}
+            {/* Dropdown to select sort method */}
+            <label htmlFor="sortSelect"><strong>Sort By:</strong>{' '}</label>
+            <select
+                id="sortSelect"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                style={{ marginBottom: '1rem' }}
+            >
+                <option value="average">Average Scout Ranking</option>
+                <option value="ESPN Rank">ESPN Rank</option>
+                <option value="Sam Vecenie Rank">Sam Vecenie Rank</option>
+                <option value="Kevin O'Connor Rank">Kevin O'Connor Rank</option>
+                <option value="Kyle Boone Rank">Kyle Boone Rank</option>
+                <option value="Gary Parrish Rank">Gary Parrish Rank</option>
+            </select>
+
+            {/* Render player cards */}
             {players.map(player => (
                 <PlayerCard key={player.playerId} player={player} />
             ))}

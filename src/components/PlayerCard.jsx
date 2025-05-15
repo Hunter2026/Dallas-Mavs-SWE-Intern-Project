@@ -26,6 +26,7 @@ const PlayerCard = ({ player }) => {
 
             {/* Basic player info */}
             <p>Team: {player.currentTeam}</p>
+            <p>League: {player.league}</p>
 
             {/* List of scout rankings with visual indication of high/low opinions */}
             <p><strong>Mavericks Scout Rankings:</strong></p>
