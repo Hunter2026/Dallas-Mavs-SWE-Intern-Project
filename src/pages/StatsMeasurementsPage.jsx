@@ -1,71 +1,73 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import PlayerDevelopment from '../components/PlayerDevelopment';
 
 const StatsMeasurementsPage = () => {
-    const { id } = useParams();
+    const { id } = useParams(); // Extract player ID from URL params
 
-    // State variables
-    const [player, setPlayer] = useState(null);              // Basic player info
-    const [measurements, setMeasurements] = useState(null);  // Physical metrics
-    const [gameLogs, setGameLogs] = useState([]);            // All game logs
-    const [seasonLogs, setSeasonLogs] = useState([]);        // Season-level averages
-    const [availableSeasons, setAvailableSeasons] = useState([]); // List of all seasons
-    const [selectedSeason, setSelectedSeason] = useState(null);   // Currently selected season
+    // State hooks to store player data
+    const [player, setPlayer] = useState(null);              // Basic player info (name, ID)
+    const [measurements, setMeasurements] = useState(null);  // Combine measurements (height, weight, wingspan, etc.)
+    const [gameLogs, setGameLogs] = useState([]);            // Individual game logs
+    const [seasonLogs, setSeasonLogs] = useState([]);        // Season averages
+    const [availableSeasons, setAvailableSeasons] = useState([]); // All seasons played
+    const [selectedSeason, setSelectedSeason] = useState(null);   // Current season to display
     const [sortByStat, setSortByStat] = useState(null);      // Stat to sort game logs by
 
-    // Fetch all player-related data when the page loads
+    // Load all player-related data when the component mounts
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
-                // Player bio
+                // Find player bio
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
                 setPlayer(foundPlayer);
 
-                // Measurements (e.g. height, weight, wingspan)
+                // Find measurements (optional chaining in case data is missing)
                 const foundMeasurements = data.measurements?.find(
                     m => m.playerId?.toString() === id
                 );
                 setMeasurements(foundMeasurements);
 
-                // Game logs for this player
+                // Filter game logs belonging to this player
                 const gameLogsForPlayer = data.game_logs?.filter(
                     g => g.playerId?.toString() === id
                 ) || [];
                 setGameLogs(gameLogsForPlayer);
 
-                // Season averages for this player
+                // Filter season averages for this player
                 const logsForPlayer = data.seasonLogs?.filter(
                     s => s.playerId?.toString() === id
                 ) || [];
                 setSeasonLogs(logsForPlayer);
 
-                // Collect all unique seasons from both logs and averages
+                // Combine unique seasons from both game logs and season logs
                 const seasonsFromGames = gameLogsForPlayer.map(g => g.season);
                 const seasonsFromAverages = logsForPlayer.map(s => s.Season);
                 const combinedSeasons = [...new Set([...seasonsFromGames, ...seasonsFromAverages])].sort((a, b) => b - a);
                 setAvailableSeasons(combinedSeasons);
 
-                // Default to most recent season if available
+                // Default to the most recent season
                 if (combinedSeasons.length > 0) {
                     setSelectedSeason(combinedSeasons[0]);
                 }
             });
     }, [id]);
 
+    // Loading screen while data fetch is pending
     if (!player) return <p>Loading player data...</p>;
 
     // Filter game logs by selected season
     const filteredLogs = gameLogs.filter(g => g.season === selectedSeason);
     let displayedLogs = [...filteredLogs];
 
-    // If a stat is selected, sort the logs by that stat (descending)
+    // Sort game logs if a specific stat is selected
     if (sortByStat) {
         displayedLogs.sort((a, b) => {
             let valA, valB;
 
             if (sortByStat === 'timePlayed') {
-                // Convert "MM:SS" string into a numeric value (minutes.decimal)
+                // Convert "MM:SS" time format to numeric minutes for sorting
                 const toMinutes = (str) => {
                     if (!str || !str.includes(':')) return -Infinity;
                     const [min, sec] = str.split(':').map(Number);
@@ -74,25 +76,27 @@ const StatsMeasurementsPage = () => {
                 valA = toMinutes(a.timePlayed);
                 valB = toMinutes(b.timePlayed);
             } else {
+                // Default numeric sorting, fallback to -Infinity for missing data
                 valA = typeof a[sortByStat] === 'number' ? a[sortByStat] : -Infinity;
                 valB = typeof b[sortByStat] === 'number' ? b[sortByStat] : -Infinity;
             }
 
-            return valB - valA;
+            return valB - valA; // Descending order
         });
     }
 
     return (
         <div style={{ padding: '1rem' }}>
-            {/* Back to main player profile */}
+            {/* Navigation back to player profile */}
             <Link to={`/player/${player.playerId}`} style={{ display: 'inline-block', marginBottom: '1rem' }}>
                 ← Back to Player Profile
             </Link>
 
-            {/* Physical measurements */}
+            {/* === Player Measurements Section === */}
             <h2>{player.name} – Measurements</h2>
             {measurements ? (
                 <ul>
+                    {/* Display individual measurement fields */}
                     <li><strong>Height (No Shoes):</strong> {measurements.heightNoShoes}"</li>
                     <li><strong>Height (With Shoes):</strong> {measurements.heightShoes}"</li>
                     <li><strong>Wingspan:</strong> {measurements.wingspan}"</li>
@@ -111,9 +115,57 @@ const StatsMeasurementsPage = () => {
                 <p>No measurements available for this player.</p>
             )}
 
-            {/* Season dropdown */}
+            {/* === Career Averages Section === */}
+            <h2 style={{ marginTop: '2rem' }}>{player.name} – Career Averages</h2>
+            {seasonLogs.length > 0 ? (
+                (() => {
+                    const totalGP = seasonLogs.reduce((sum, s) => sum + s.GP, 0);
+
+                    // Weighted average utility based on GP (games played)
+                    const weightedAvg = (key) => {
+                        const total = seasonLogs.reduce((sum, s) => sum + (s[key] ?? 0) * s.GP, 0);
+                        return totalGP > 0 ? (total / totalGP).toFixed(1) : '—';
+                    };
+
+                    // Render averages table
+                    return (
+                        <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
+                            <thead>
+                            <tr>
+                                <th>GP</th><th>MP</th><th>PTS</th><th>REB</th><th>AST</th>
+                                <th>STL</th><th>BLK</th><th>TOV</th><th>Fouls</th>
+                                <th>FG%</th><th>3P%</th><th>FT%</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>{totalGP}</td>
+                                <td>{weightedAvg('MP')}</td>
+                                <td>{weightedAvg('PTS')}</td>
+                                <td>{weightedAvg('TRB')}</td>
+                                <td>{weightedAvg('AST')}</td>
+                                <td>{weightedAvg('STL')}</td>
+                                <td>{weightedAvg('BLK')}</td>
+                                <td>{weightedAvg('TOV')}</td>
+                                <td>{weightedAvg('PF')}</td>
+                                <td>{weightedAvg('FG%')}</td>
+                                <td>{weightedAvg('3P%')}</td>
+                                <td>{weightedAvg('FTP')}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    );
+                })()
+            ) : (
+                <p>No season data available to calculate career averages.</p>
+            )}
+
+            {/* === Player Development Chart === */}
+            <PlayerDevelopment seasonLogs={seasonLogs} player={player} />
+
+            {/* === Season Selector Dropdown === */}
             {availableSeasons.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
+                <div style={{ marginTop: '5rem', marginBottom: '1rem' }}>
                     <label htmlFor="seasonSelect"><strong>Select Season:</strong>{' '}</label>
                     <select
                         id="seasonSelect"
@@ -127,28 +179,17 @@ const StatsMeasurementsPage = () => {
                 </div>
             )}
 
-            {/* Season-level averages for selected year (can be multiple leagues) */}
-            <h2 style={{ marginTop: '2rem' }}>{player.name} – Season Averages</h2>
+            {/* === Season Averages Table === */}
+            <h2 style={{ marginTop: '2rem', marginBottom: '1rem' }}>{player.name} – Season Averages</h2>
             {selectedSeason && (() => {
                 const logs = seasonLogs.filter(s => s.Season === selectedSeason);
                 return logs.length > 0 ? (
                     <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
                         <thead>
                         <tr>
-                            <th>Team</th>
-                            <th>League</th>
-                            <th>GP</th>
-                            <th>MP</th>
-                            <th>PTS</th>
-                            <th>REB</th>
-                            <th>AST</th>
-                            <th>STL</th>
-                            <th>BLK</th>
-                            <th>TOV</th>
-                            <th>Fouls</th>
-                            <th>FG%</th>
-                            <th>3P%</th>
-                            <th>FT%</th>
+                            <th>Team</th><th>League</th><th>GP</th><th>MP</th><th>PTS</th>
+                            <th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th>
+                            <th>Fouls</th><th>FG%</th><th>3P%</th><th>FT%</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -177,10 +218,10 @@ const StatsMeasurementsPage = () => {
                 );
             })()}
 
-            {/* Game logs for selected season */}
+            {/* === Game Logs Section === */}
             <h2 style={{ marginTop: '2rem' }}>{player.name} – Game Logs</h2>
 
-            {/* Sorting dropdown */}
+            {/* Sort stat dropdown */}
             <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="statSort"><strong>Sort By Stat:</strong>{' '}</label>
                 <select
@@ -207,27 +248,16 @@ const StatsMeasurementsPage = () => {
                 </select>
             </div>
 
-            {/* Game logs table */}
+            {/* Display game log table or fallback message */}
             {displayedLogs.length === 0 ? (
                 <p>No game logs available for the selected season.</p>
             ) : (
                 <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%' }}>
                     <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Opponent</th>
-                        <th>PTS</th>
-                        <th>REB</th>
-                        <th>AST</th>
-                        <th>STL</th>
-                        <th>BLK</th>
-                        <th>TOV</th>
-                        <th>+/-</th>
-                        <th>FGM-FGA</th>
-                        <th>3PM-3PA</th>
-                        <th>FTM-FTA</th>
-                        <th>Fouls</th>
-                        <th>Minutes</th>
+                        <th>Date</th><th>Opponent</th><th>PTS</th><th>REB</th><th>AST</th>
+                        <th>STL</th><th>BLK</th><th>TOV</th><th>+/-</th><th>FGM-FGA</th>
+                        <th>3PM-3PA</th><th>FTM-FTA</th><th>Fouls</th><th>Minutes</th>
                     </tr>
                     </thead>
                     <tbody>

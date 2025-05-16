@@ -28,3 +28,7 @@ statistics through game logs or in season stats. They are also able to filter wh
 (there isn't enough game logs for more than one season but it's a nice feature for future purposes) and they have the ability
 to sort through stats in the game logs by most to least. 
 
+Since we have career averages, season averages, and game logs, I decided to implement a player development chart over their career
+to see increase or decrease in minutes, points, assists, total rebounds, steals and blocks. This way it is easy to see visually on whether
+a player's progression as been positive or negative. 
+
