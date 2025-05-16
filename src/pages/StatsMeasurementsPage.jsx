@@ -4,55 +4,68 @@ import { useParams, Link } from 'react-router-dom';
 const StatsMeasurementsPage = () => {
     const { id } = useParams();
 
-    // States for player data
-    const [player, setPlayer] = useState(null);
-    const [measurements, setMeasurements] = useState(null);
-    const [gameLogs, setGameLogs] = useState([]);
-    const [availableSeasons, setAvailableSeasons] = useState([]);
-    const [selectedSeason, setSelectedSeason] = useState(null);
-    const [sortByStat, setSortByStat] = useState(null); // Controls stat-based sorting
+    // State variables
+    const [player, setPlayer] = useState(null);              // Basic player info
+    const [measurements, setMeasurements] = useState(null);  // Physical metrics
+    const [gameLogs, setGameLogs] = useState([]);            // All game logs
+    const [seasonLogs, setSeasonLogs] = useState([]);        // Season-level averages
+    const [availableSeasons, setAvailableSeasons] = useState([]); // List of all seasons
+    const [selectedSeason, setSelectedSeason] = useState(null);   // Currently selected season
+    const [sortByStat, setSortByStat] = useState(null);      // Stat to sort game logs by
 
-    // Fetch data on mount
+    // Fetch all player-related data when the page loads
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
-                // Find player profile
+                // Player bio
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
                 setPlayer(foundPlayer);
 
-                // Get measurement data
+                // Measurements (e.g. height, weight, wingspan)
                 const foundMeasurements = data.measurements?.find(
                     m => m.playerId?.toString() === id
                 );
                 setMeasurements(foundMeasurements);
 
-                // Get game logs and available seasons
+                // Game logs for this player
                 const gameLogsForPlayer = data.game_logs?.filter(
                     g => g.playerId?.toString() === id
                 ) || [];
-
                 setGameLogs(gameLogsForPlayer);
 
-                const seasons = [...new Set(gameLogsForPlayer.map(g => g.season))].sort((a, b) => b - a);
-                setAvailableSeasons(seasons);
-                if (seasons.length > 0) setSelectedSeason(seasons[0]);
+                // Season averages for this player
+                const logsForPlayer = data.seasonLogs?.filter(
+                    s => s.playerId?.toString() === id
+                ) || [];
+                setSeasonLogs(logsForPlayer);
+
+                // Collect all unique seasons from both logs and averages
+                const seasonsFromGames = gameLogsForPlayer.map(g => g.season);
+                const seasonsFromAverages = logsForPlayer.map(s => s.Season);
+                const combinedSeasons = [...new Set([...seasonsFromGames, ...seasonsFromAverages])].sort((a, b) => b - a);
+                setAvailableSeasons(combinedSeasons);
+
+                // Default to most recent season if available
+                if (combinedSeasons.length > 0) {
+                    setSelectedSeason(combinedSeasons[0]);
+                }
             });
     }, [id]);
 
     if (!player) return <p>Loading player data...</p>;
 
-    // Filter logs to only the selected season
+    // Filter game logs by selected season
     const filteredLogs = gameLogs.filter(g => g.season === selectedSeason);
     let displayedLogs = [...filteredLogs];
 
-    // Sort logs if stat is selected
+    // If a stat is selected, sort the logs by that stat (descending)
     if (sortByStat) {
         displayedLogs.sort((a, b) => {
             let valA, valB;
 
             if (sortByStat === 'timePlayed') {
-                // Convert "MM:SS" to a numeric value for minutes
+                // Convert "MM:SS" string into a numeric value (minutes.decimal)
                 const toMinutes = (str) => {
                     if (!str || !str.includes(':')) return -Infinity;
                     const [min, sec] = str.split(':').map(Number);
@@ -65,20 +78,19 @@ const StatsMeasurementsPage = () => {
                 valB = typeof b[sortByStat] === 'number' ? b[sortByStat] : -Infinity;
             }
 
-            return valB - valA; // Descending order
+            return valB - valA;
         });
     }
 
     return (
         <div style={{ padding: '1rem' }}>
-            {/* Navigation back to player profile */}
+            {/* Back to main player profile */}
             <Link to={`/player/${player.playerId}`} style={{ display: 'inline-block', marginBottom: '1rem' }}>
                 ← Back to Player Profile
             </Link>
 
+            {/* Physical measurements */}
             <h2>{player.name} – Measurements</h2>
-
-            {/* Display physical and athletic measurements */}
             {measurements ? (
                 <ul>
                     <li><strong>Height (No Shoes):</strong> {measurements.heightNoShoes}"</li>
@@ -99,9 +111,7 @@ const StatsMeasurementsPage = () => {
                 <p>No measurements available for this player.</p>
             )}
 
-            <h2 style={{ marginTop: '2rem' }}>{player.name} – Game Logs</h2>
-
-            {/* Season selector */}
+            {/* Season dropdown */}
             {availableSeasons.length > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
                     <label htmlFor="seasonSelect"><strong>Select Season:</strong>{' '}</label>
@@ -117,7 +127,60 @@ const StatsMeasurementsPage = () => {
                 </div>
             )}
 
-            {/* Stat filter dropdown */}
+            {/* Season-level averages for selected year (can be multiple leagues) */}
+            <h2 style={{ marginTop: '2rem' }}>{player.name} – Season Averages</h2>
+            {selectedSeason && (() => {
+                const logs = seasonLogs.filter(s => s.Season === selectedSeason);
+                return logs.length > 0 ? (
+                    <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
+                        <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>League</th>
+                            <th>GP</th>
+                            <th>MP</th>
+                            <th>PTS</th>
+                            <th>REB</th>
+                            <th>AST</th>
+                            <th>STL</th>
+                            <th>BLK</th>
+                            <th>TOV</th>
+                            <th>Fouls</th>
+                            <th>FG%</th>
+                            <th>3P%</th>
+                            <th>FT%</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {logs.map((seasonLog, index) => (
+                            <tr key={index}>
+                                <td>{seasonLog.Team}</td>
+                                <td>{seasonLog.League}</td>
+                                <td>{seasonLog.GP}</td>
+                                <td>{seasonLog.MP}</td>
+                                <td>{seasonLog.PTS}</td>
+                                <td>{seasonLog.TRB}</td>
+                                <td>{seasonLog.AST}</td>
+                                <td>{seasonLog.STL}</td>
+                                <td>{seasonLog.BLK}</td>
+                                <td>{seasonLog.TOV}</td>
+                                <td>{seasonLog.PF}</td>
+                                <td>{seasonLog['FG%']}</td>
+                                <td>{seasonLog['3P%']}</td>
+                                <td>{seasonLog.FTP}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p>No season stats available for the selected year.</p>
+                );
+            })()}
+
+            {/* Game logs for selected season */}
+            <h2 style={{ marginTop: '2rem' }}>{player.name} – Game Logs</h2>
+
+            {/* Sorting dropdown */}
             <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="statSort"><strong>Sort By Stat:</strong>{' '}</label>
                 <select
