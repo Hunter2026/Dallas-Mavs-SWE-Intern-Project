@@ -47,6 +47,13 @@ const extractStrengthPhrase = (text) => {
     if (lower.includes('defense') && lower.includes('versatile')) {
         return 'defends multiple positions effectively';
     }
+    if (lower.includes('playmake')) {
+        return 'has advanced playmaking skills';
+    }
+    if (lower.includes('rebound')) {
+        return 'has advanced rebounding skills';
+    }
+
 
     return null; // No match
 };
@@ -67,7 +74,12 @@ const extractWeaknessPhrase = (text) => {
     if (lower.includes('defense')) {
         return 'has lapses in defensive consistency';
     }
-
+    if (lower.includes('offense')) {
+        return 'has lapses in offensive consistency';
+    }
+    if (lower.includes('patience')) {
+        return 'needs to improve patience with or without basketball';
+    }
     return null; // No match
 };
 
@@ -133,7 +145,7 @@ const SummaryGenerator = ({ report }) => {
     }
 
     if (weaknessPhrase) {
-        summary += `However, ${weaknessPhrase}. `;
+        summary += `Furthermore, ${weaknessPhrase}. `;
     }
 
     // Interpret gap level

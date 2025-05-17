@@ -34,5 +34,13 @@ to sort through stats in the game logs by most to least.
 
 Since we have career averages, season averages, and game logs, I decided to implement a player development chart over their career
 to see increase or decrease in minutes, points, assists, total rebounds, steals and blocks. This way it is easy to see visually on whether
-a player's progression as been positive or negative. 
+a player's progression as been positive or negative.
+
+Now to focus on the scouting side, I have added a scouting form that which a user can add the player's strengths, weaknesses, 
+player comparison, the best NBA fit (team), projected role, projected ceiling, draft range, and a trait rating. This trait rating has
+numbers 0-10 based on shooting, ball handling, defense, athleticism, IQ, and motor that the user can select. 
+
+On top of the full submitted report, I have added a generated simple summary to get the main idea of the player in a few sentences, 
+making it easy for scouts to process information quickly. These submitted reports will be able to be viewed on a submitted reports page
+where scouts can compare reports with one another in the present or future. 
 

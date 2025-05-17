@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage.jsx';
 import PlayerPage from './pages/PlayerPage.jsx';
 import StatsMeasurementsPage from './pages/StatsMeasurementsPage.jsx';
 import ScoutFormPage from './pages/ScoutFormPage.jsx';
+import SubmittedScoutReportPage from './pages/SubmittedScoutReportPage.jsx';
 
 function App() {
     return (
@@ -13,6 +14,7 @@ function App() {
                 <Route path="/player/:id" element={<PlayerPage />} />
                 <Route path="/player/:id/stats" element={<StatsMeasurementsPage />} />
                 <Route path="/player/:id/scouting" element={<ScoutFormPage />} />
+                <Route path="/player/:id/report" element={<SubmittedScoutReportPage />} />
             </Routes>
         </Router>
     );

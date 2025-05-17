@@ -2,20 +2,21 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SummaryGenerator from '../components/SummaryGenerator';
 
-// Predefined options for select dropdowns
+// Define constant dropdown options for roles, ceilings, draft range, and traits
 const roles = ['Starter', 'Role Player', 'Bench', 'Developmental'];
 const ceilings = ['Hall of Famer', 'All-NBA', 'All-Star', 'High-Level Starter', 'Starter', 'Rotation Player', 'Fringe Roster'];
 const draftRanges = ['Lottery', 'Mid 1st', 'Late 1st', '2nd Round', 'Undrafted'];
 const traits = ['Shooting', 'Ball Handling', 'Defense', 'Athleticism', 'IQ', 'Motor'];
 
-// Main component for the scouting form
+// Main component for the scouting form page
 const ScoutFormPage = ({ onSubmit }) => {
-    const { id } = useParams(); // Gets the player ID from the URL
-    const [player, setPlayer] = useState(null); // Holds player data once fetched
-    const [submittedReport, setSubmittedReport] = useState(null); // Stores submitted report for confirmation view
+    const { id } = useParams(); // Get the player ID from the URL
+    const [player, setPlayer] = useState(null); // Store the fetched player object
+    const [submittedReport, setSubmittedReport] = useState(null); // Store the most recent scouting report
+
+    const reportRef = useRef(null); // Ref to scroll to the report summary when it's submitted
 
     // State variables for form fields
-    const reportRef = useRef(null); // Used to scroll to confirmation after submit
     const [strengths, setStrengths] = useState('');
     const [weaknesses, setWeaknesses] = useState('');
     const [comparison, setComparison] = useState('');
@@ -24,11 +25,11 @@ const ScoutFormPage = ({ onSubmit }) => {
     const [ceiling, setCeiling] = useState('');
     const [range, setRange] = useState('');
     const [ratings, setRatings] = useState(
-        traits.reduce((acc, trait) => ({ ...acc, [trait]: 5 }), {}) // Initialize each trait with default rating 5
+        traits.reduce((acc, trait) => ({ ...acc, [trait]: 5 }), {}) // Default all traits to 5/10
     );
-    const [error, setError] = useState(null); // Holds any form validation error
+    const [error, setError] = useState(null); // Track validation errors
 
-    // Fetch player data when component mounts or ID changes
+    // Fetch player bio from JSON file on component mount or when `id` changes
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
@@ -38,16 +39,16 @@ const ScoutFormPage = ({ onSubmit }) => {
             });
     }, [id]);
 
-    // Updates individual trait rating
+    // Handler for updating a specific trait's value
     const handleChange = (trait, value) => {
         setRatings(prev => ({ ...prev, [trait]: Number(value) }));
     };
 
-    // Handles form submission
+    // Form submit handler
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Validate all fields
+        // Validate required fields and ratings range
         if (
             !strengths.trim() ||
             !weaknesses.trim() ||
@@ -62,7 +63,7 @@ const ScoutFormPage = ({ onSubmit }) => {
             return;
         }
 
-        // Compile report object
+        // Create the scouting report object
         const report = {
             strengths,
             weaknesses,
@@ -75,21 +76,31 @@ const ScoutFormPage = ({ onSubmit }) => {
             createdAt: new Date().toLocaleString(), // Timestamp
         };
 
-        // Send report to parent or console as fallback
+        // Pass report to parent handler if provided, else fallback to console log
         if (onSubmit) {
             onSubmit(report);
         } else {
             console.log('Scouting Report:', report);
         }
 
-        setSubmittedReport(report); // Save for display
-        setTimeout(() => {
-            requestAnimationFrame(() => {
-                reportRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            });
-        }, 100);
+        // Save latest report to local state
+        setSubmittedReport(report);
 
-        // Reset form fields
+        // Load existing reports from localStorage and prepend new one
+        const existing = localStorage.getItem(`report_player_${id}`);
+        let existingReports = [];
+
+        try {
+            const parsed = JSON.parse(existing);
+            existingReports = Array.isArray(parsed) ? parsed : [parsed]; // Legacy single report support
+        } catch {
+            existingReports = [];
+        }
+
+        const updatedReports = [report, ...existingReports];
+        localStorage.setItem(`report_player_${id}`, JSON.stringify(updatedReports));
+
+        // Reset the form inputs
         setStrengths('');
         setWeaknesses('');
         setComparison('');
@@ -101,60 +112,71 @@ const ScoutFormPage = ({ onSubmit }) => {
         setError(null);
     };
 
-    // Show loading state until player is fetched
+    // Smooth scroll to report after submission
+    useEffect(() => {
+        if (submittedReport && reportRef.current) {
+            setTimeout(() => {
+                requestAnimationFrame(() => {
+                    reportRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                });
+            }, 150);
+        }
+    }, [submittedReport]);
+
+    // Display loading indicator until player is loaded
     if (!player) return <p>Loading player info...</p>;
 
     return (
         <div style={{ padding: '1rem' }}>
-            {/* Back to profile link */}
+            {/* Back button to player profile */}
             <Link to={`/player/${player.playerId}`} style={{ display: 'inline-block', marginBottom: '1rem' }}>
                 ← Back to Player Profile
             </Link>
 
-            {/* Player name and header */}
+            {/* Player name and section title */}
             <h2>{player.name} - Scouting Report</h2>
 
-            {/* Navigation to stats and measurements page */}
+            {/* Button to navigate to player stats page */}
             <Link to={`/player/${id}/stats`}>
                 <button style={{ marginBottom: '1rem' }}>View Stats & Measurements</button>
             </Link>
 
-            {/* Main form */}
+            {/* Scouting form begins */}
             <form onSubmit={handleSubmit} style={{ marginTop: '2rem' }}>
                 <h4>Scouting Evaluation</h4>
                 {error && <p style={{ color: 'red' }}>{error}</p>}
 
-                {/* Strengths input */}
+                {/* Strengths field */}
                 <label><strong>Strengths:</strong> <span style={{ fontSize: '0.9em', color: '#666' }}>({strengths.trim().split(/\s+/).filter(Boolean).length} words)</span></label><br />
                 <textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} rows={2} cols={50} /><br /><br />
 
-                {/* Weaknesses input */}
+                {/* Weaknesses field */}
                 <label><strong>Weaknesses:</strong> <span style={{ fontSize: '0.9em', color: '#666' }}>({weaknesses.trim().split(/\s+/).filter(Boolean).length} words)</span></label><br />
                 <textarea value={weaknesses} onChange={(e) => setWeaknesses(e.target.value)} rows={2} cols={50} /><br /><br />
 
-                {/* Comparison input */}
+                {/* Player comparison */}
                 <label><strong>Player Comparison:</strong></label><br />
                 <input value={comparison} onChange={(e) => setComparison(e.target.value)} /><br /><br />
 
-                {/* Fit input */}
+                {/* Best team fit */}
                 <label><strong>Best NBA Fit (Team):</strong></label><br />
                 <input value={fit} onChange={(e) => setFit(e.target.value)} /><br /><br />
 
-                {/* Role dropdown */}
+                {/* Role selector */}
                 <label><strong>Projected Role:</strong></label><br />
                 <select value={role} onChange={(e) => setRole(e.target.value)}>
                     <option value="">-- Select --</option>
                     {roles.map(r => <option key={r} value={r}>{r}</option>)}
                 </select><br /><br />
 
-                {/* Ceiling dropdown */}
+                {/* Ceiling selector */}
                 <label><strong>Projected Ceiling:</strong></label><br />
                 <select value={ceiling} onChange={(e) => setCeiling(e.target.value)}>
                     <option value="">-- Select --</option>
                     {ceilings.map(c => <option key={c} value={c}>{c}</option>)}
                 </select><br /><br />
 
-                {/* Draft range dropdown */}
+                {/* Draft range selector */}
                 <label><strong>Draft Range:</strong></label><br />
                 <select value={range} onChange={(e) => setRange(e.target.value)}>
                     <option value="">-- Select --</option>
@@ -182,7 +204,7 @@ const ScoutFormPage = ({ onSubmit }) => {
                 <button type="submit" style={{ marginTop: '1rem' }}>Submit Scouting Report</button>
             </form>
 
-            {/* Confirmation of submission */}
+            {/* Confirmation section with submitted report and summary */}
             {submittedReport && (
                 <div
                     ref={reportRef}
@@ -197,7 +219,7 @@ const ScoutFormPage = ({ onSubmit }) => {
                     <p><strong>Projected Ceiling:</strong> {submittedReport.ceiling}</p>
                     <p><strong>Draft Range:</strong> {submittedReport.range}</p>
 
-                    {/* Trait ratings summary */}
+                    {/* Trait summary list */}
                     <h5>Trait Ratings:</h5>
                     <ul>
                         {Object.entries(submittedReport.ratings).map(([trait, value]) => (
@@ -205,7 +227,7 @@ const ScoutFormPage = ({ onSubmit }) => {
                         ))}
                     </ul>
 
-                    {/* Summary component */}
+                    {/* Auto-generated summary */}
                     <SummaryGenerator report={submittedReport} />
                 </div>
             )}

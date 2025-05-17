@@ -1,33 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-// PlayerPage displays full profile info and a scouting report form for a given player
+// Component for displaying a full player profile page, including bio and scouting report links
 const PlayerPage = () => {
-    const { id } = useParams(); // Extract player ID from the route
-    const [player, setPlayer] = useState(null); // Player object (bio + rankings)
-    const [scoutingReports, setScoutingReports] = useState([]); // Array of submitted reports
+    const { id } = useParams(); // Extract player ID from the route (URL parameter)
+    const [player, setPlayer] = useState(null); // Stores the combined player bio and scout ranking data
+    const [scoutingReports, setScoutingReports] = useState([]); // Stores text-based scouting reports (not used directly here)
 
-    // Fetch player data and matching scout rankings on page load
+    // Fetch player bio and scout ranking data on initial render or when `id` changes
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
-                // Find the player bio and scout rankings by playerId
+                // Find matching bio and scout ranking by playerId
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
                 const rankings = data.scoutRankings.find(r => r.playerId.toString() === id);
+                // Combine bio and rankings into one player object
                 setPlayer({ ...foundPlayer, scoutRankings: rankings });
             });
     }, [id]);
 
-    // Handle submitting a new scouting report
-    const handleReportSubmit = (e) => {
-        e.preventDefault();
-        if (reportText.trim() !== '') {
-            setScoutingReports(prev => [...prev, reportText.trim()]);
-            setReportText('');
-        }
-    };
-
+    // Helper function to calculate age from birthdate
     const calculateAge = (birthDateString) => {
         const birthDate = new Date(birthDateString);
         const today = new Date();
@@ -44,18 +37,17 @@ const PlayerPage = () => {
         return age;
     };
 
-
-    // Show loading state while data is being fetched
+    // Display loading text while player data is being fetched
     if (!player) return <p>Loading...</p>;
 
     return (
         <div style={{ padding: '1rem' }}>
-            {/* Back link to the Big Board */}
+            {/* Navigation link back to the big board */}
             <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>
                 ← Back to Big Board
             </Link>
 
-            {/* Player Basic Info */}
+            {/* Display player basic info */}
             <h2>{player.name}</h2>
             {player.photoUrl && (
                 <img src={player.photoUrl} alt={player.name} width="150" />
@@ -70,7 +62,9 @@ const PlayerPage = () => {
             <p>
                 <strong>Hometown:</strong> {player.homeTown}, {player.homeState || player.homeCountry}
             </p>
+            <p><strong>Nationality:</strong> {player.nationality}</p>
 
+            {/* Navigation buttons to other player-specific pages */}
             <Link to={`/player/${player.playerId}/stats`}>
                 <button style={{ marginTop: '1rem' }}>View Stats & Measurements</button>
             </Link>
@@ -79,14 +73,18 @@ const PlayerPage = () => {
                 <button style={{ marginTop: '0.5rem' }}>Write Scouting Report</button>
             </Link>
 
-            {/* Scout Rankings Display */}
+            <Link to={`/player/${player.playerId}/report`}>
+                <button>View Submitted Scouting Reports</button>
+            </Link>
+
+            {/* Display scout rankings associated with this player */}
             <h3>Mavericks Scout Rankings</h3>
             <ul>
                 {Object.entries(player.scoutRankings || {}).map(([scout, rank]) => {
-                    if (scout === "playerId") return null; // Skip ID field
+                    if (scout === "playerId") return null; // Skip internal ID field
                     return (
                         <li key={scout}>
-                            {scout}: {rank ?? 'N/A'}
+                            {scout}: {rank ?? 'N/A'} {/* Show N/A if no ranking provided */}
                         </li>
                     );
                 })}
