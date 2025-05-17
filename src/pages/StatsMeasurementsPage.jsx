@@ -88,12 +88,17 @@ const StatsMeasurementsPage = () => {
     return (
         <div style={{ padding: '1rem' }}>
             {/* Navigation back to player profile */}
-            <Link to={`/player/${player.playerId}`} style={{ display: 'inline-block', marginBottom: '1rem' }}>
+            <Link to={`/player/${player.playerId}`} style={{ display: 'block', marginBottom: '1rem' }}>
                 ← Back to Player Profile
             </Link>
 
             {/* === Player Measurements Section === */}
             <h2>{player.name} – Measurements</h2>
+
+            <Link to={`/player/${id}/scouting`} style={{ display: 'block', marginBottom: '1rem' }}>
+                <button>Write Scouting Report</button>
+            </Link>
+
             {measurements ? (
                 <ul>
                     {/* Display individual measurement fields */}

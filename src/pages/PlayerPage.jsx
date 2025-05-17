@@ -5,7 +5,6 @@ import { useParams, Link } from 'react-router-dom';
 const PlayerPage = () => {
     const { id } = useParams(); // Extract player ID from the route
     const [player, setPlayer] = useState(null); // Player object (bio + rankings)
-    const [reportText, setReportText] = useState(''); // Text input for scouting report
     const [scoutingReports, setScoutingReports] = useState([]); // Array of submitted reports
 
     // Fetch player data and matching scout rankings on page load
@@ -76,6 +75,10 @@ const PlayerPage = () => {
                 <button style={{ marginTop: '1rem' }}>View Stats & Measurements</button>
             </Link>
 
+            <Link to={`/player/${player.playerId}/scouting`}>
+                <button style={{ marginTop: '0.5rem' }}>Write Scouting Report</button>
+            </Link>
+
             {/* Scout Rankings Display */}
             <h3>Mavericks Scout Rankings</h3>
             <ul>
@@ -88,32 +91,6 @@ const PlayerPage = () => {
                     );
                 })}
             </ul>
-
-            {/* Scouting Report Form */}
-            <h3>Submit Scouting Report</h3>
-            <form onSubmit={handleReportSubmit}>
-                <textarea
-                    value={reportText}
-                    onChange={(e) => setReportText(e.target.value)}
-                    placeholder="Write your report here..."
-                    rows={4}
-                    cols={50}
-                />
-                <br />
-                <button type="submit">Submit</button>
-            </form>
-
-            {/* Display List of Submitted Reports (from local state) */}
-            {scoutingReports.length > 0 && (
-                <>
-                    <h4>Submitted Reports:</h4>
-                    <ul>
-                        {scoutingReports.map((report, index) => (
-                            <li key={index}>{report}</li>
-                        ))}
-                    </ul>
-                </>
-            )}
         </div>
     );
 };

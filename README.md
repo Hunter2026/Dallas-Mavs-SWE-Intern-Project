@@ -6,6 +6,10 @@ Installing React Router:
 
 npm install react-router-dom
 
+Installing React Chart:
+
+npm install recharts
+
 Running the program: 
 
 npm run dev
