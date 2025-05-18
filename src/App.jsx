@@ -5,12 +5,14 @@ import PlayerPage from './pages/PlayerPage.jsx';
 import StatsMeasurementsPage from './pages/StatsMeasurementsPage.jsx';
 import ScoutFormPage from './pages/ScoutFormPage.jsx';
 import SubmittedScoutReportPage from './pages/SubmittedScoutReportPage.jsx';
+import ComparePage from "./pages/ComparePage.jsx";
 
 function App() {
     return (
         <Router>
             <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/compare" element={<ComparePage />} />
                 <Route path="/player/:id" element={<PlayerPage />} />
                 <Route path="/player/:id/stats" element={<StatsMeasurementsPage />} />
                 <Route path="/player/:id/scouting" element={<ScoutFormPage />} />

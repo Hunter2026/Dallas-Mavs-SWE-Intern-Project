@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import PlayerCard from '../components/PlayerCard.jsx';
 
 const HomePage = () => {
-    const [players, setPlayers] = useState([]);           // Full merged list
-    const [sortBy, setSortBy] = useState('average');      // Sort method
-    const [searchQuery, setSearchQuery] = useState('');   // Text search
-    const [teamFilter, setTeamFilter] = useState('');     // Selected team
-    const [leagueFilter, setLeagueFilter] = useState(''); // Selected league
+    const [players, setPlayers] = useState([]);           // Full merged player list
+    const [sortBy, setSortBy] = useState('average');      // Scout sort method
+    const [searchQuery, setSearchQuery] = useState('');   // Search text
+    const [teamFilter, setTeamFilter] = useState('');     // Team dropdown value
+    const [leagueFilter, setLeagueFilter] = useState(''); // League dropdown value
 
-    const [allTeams, setAllTeams] = useState([]);         // For filter dropdown
-    const [allLeagues, setAllLeagues] = useState([]);     // For filter dropdown
+    const [allTeams, setAllTeams] = useState([]);         // Unique teams
+    const [allLeagues, setAllLeagues] = useState([]);     // Unique leagues
 
+    const [compareList, setCompareList] = useState([]);   // Selected players for comparison
+
+    // Fetch and prepare data
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then((res) => res.json())
@@ -20,11 +24,11 @@ const HomePage = () => {
                     return { ...player, scoutRankings: ranking };
                 });
 
-                // Populate team and league options
+                // Populate team/league dropdowns
                 setAllTeams([...new Set(merged.map(p => p.currentTeam).filter(Boolean))].sort());
                 setAllLeagues([...new Set(merged.map(p => p.league).filter(Boolean))].sort());
 
-                // Sort players initially by the chosen method
+                // Sort based on scout rank method
                 const sorted = [...merged].sort((a, b) => {
                     const rankA = getRankValue(a.scoutRankings, sortBy);
                     const rankB = getRankValue(b.scoutRankings, sortBy);
@@ -35,7 +39,7 @@ const HomePage = () => {
             });
     }, [sortBy]);
 
-    // Helper to get scout rank or average
+    // Get ranking value (by scout or average)
     const getRankValue = (rankings = {}, key) => {
         if (!rankings) return Infinity;
 
@@ -50,7 +54,22 @@ const HomePage = () => {
         return typeof rankings[key] === 'number' ? rankings[key] : Infinity;
     };
 
-    // Apply all filters to player list
+    // Handle toggling player in comparison list
+    const toggleCompare = (player) => {
+        setCompareList(prev => {
+            const exists = prev.find(p => p.playerId === player.playerId);
+            if (exists) {
+                return prev.filter(p => p.playerId !== player.playerId);
+            } else if (prev.length < 3) {
+                return [...prev, player];
+            } else {
+                alert("You can only compare up to 3 players.");
+                return prev;
+            }
+        });
+    };
+
+    // Apply filters and search to player list
     const filteredPlayers = players
         .filter(p =>
             p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -62,7 +81,17 @@ const HomePage = () => {
         <div>
             <h1>NBA Draft Big Board</h1>
 
-            {/* === Search by Player Name === */}
+            {/* === Comparison Cart UI === */}
+            {compareList.length > 0 && (
+                <div style={{ background: '#eef4ff', padding: '1rem', marginBottom: '1rem', borderRadius: '6px' }}>
+                    <strong>Comparing:</strong> {compareList.map(p => p.name).join(', ')}
+                    <Link to={`/compare?ids=${compareList.map(p => p.playerId).join(',')}`}>
+                        <button style={{ marginLeft: '1rem' }}>View Comparison</button>
+                    </Link>
+                </div>
+            )}
+
+            {/* === Search Input === */}
             <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="playerSearch"><strong>Search Player:</strong>{' '}</label>
                 <input
@@ -75,7 +104,7 @@ const HomePage = () => {
                 />
             </div>
 
-            {/* === Filter by Team === */}
+            {/* === Team Filter Dropdown === */}
             <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="teamFilter"><strong>Filter by Team:</strong>{' '}</label>
                 <select
@@ -90,7 +119,7 @@ const HomePage = () => {
                 </select>
             </div>
 
-            {/* === Filter by League === */}
+            {/* === League Filter Dropdown === */}
             <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="leagueFilter"><strong>Filter by League:</strong>{' '}</label>
                 <select
@@ -105,7 +134,7 @@ const HomePage = () => {
                 </select>
             </div>
 
-            {/* === Sort by Scout Ranking === */}
+            {/* === Sort Dropdown === */}
             <label htmlFor="sortSelect"><strong>Sort By:</strong>{' '}</label>
             <select
                 id="sortSelect"
@@ -121,9 +150,14 @@ const HomePage = () => {
                 <option value="Gary Parrish Rank">Gary Parrish Rank</option>
             </select>
 
-            {/* === Display Matching Players === */}
+            {/* === Render Filtered Players === */}
             {filteredPlayers.map(player => (
-                <PlayerCard key={player.playerId} player={player} />
+                <PlayerCard
+                    key={player.playerId}
+                    player={player}
+                    onCompareToggle={toggleCompare}
+                    isSelected={compareList.some(p => p.playerId === player.playerId)}
+                />
             ))}
         </div>
     );

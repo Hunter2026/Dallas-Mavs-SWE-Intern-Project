@@ -48,3 +48,8 @@ For more functionality in the big board, I added filters for player names, teams
 scout rankings. In the stats and measurement page, I have also added more capability in terms of comparing measurements with peers
 in their own draft class. That way, scouts can determine on they stack up against their counterparts. 
 
+In addition to the new functionality in the big board, I implemented a comparison tool to where the user can add up to 3 players
+to compare measurements and statistics with each other. The user can see the players that have been added to the comparison tool with a
+comparison chart at the top of the big board. Inside the comparison tool page, the user can see the measurements and statistics in written form
+and bar chart form, offering a visual interpretation instead of text. 
+
