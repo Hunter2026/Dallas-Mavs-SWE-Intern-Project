@@ -12,9 +12,19 @@ const SubmittedScoutReportPage = () => {
     useEffect(() => {
         const saved = localStorage.getItem(`report_player_${id}`);
         if (saved) {
-            const parsed = JSON.parse(saved);
-            // Ensure reports are stored as an array (legacy support for single object)
-            setReports(Array.isArray(parsed) ? parsed : [parsed]);
+            try {
+                const parsed = JSON.parse(saved);
+                const safeReports = Array.isArray(parsed)
+                    ? parsed.filter(r => r && typeof r === 'object' && r.createdAt)
+                    : (parsed && parsed.createdAt ? [parsed] : []);
+
+                setReports(safeReports);
+            } catch (e) {
+                console.error('Corrupt scouting data for player', id);
+                setReports([]);
+            }
+        } else {
+            setReports([]);
         }
     }, [id]);
 

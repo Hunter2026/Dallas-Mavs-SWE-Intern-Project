@@ -44,3 +44,7 @@ On top of the full submitted report, I have added a generated simple summary to 
 making it easy for scouts to process information quickly. These submitted reports will be able to be viewed on a submitted reports page
 where scouts can compare reports with one another in the present or future. 
 
+For more functionality in the big board, I added filters for player names, teams, and leagues along with previously implemented
+scout rankings. In the stats and measurement page, I have also added more capability in terms of comparing measurements with peers
+in their own draft class. That way, scouts can determine on they stack up against their counterparts. 
+

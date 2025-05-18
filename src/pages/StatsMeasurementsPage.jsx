@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PlayerDevelopment from '../components/PlayerDevelopment';
+import MeasurementComparison from '../components/MeasurementComparison';
 
 const StatsMeasurementsPage = () => {
     const { id } = useParams(); // Extract player ID from URL params
 
     // State hooks to store player data
     const [player, setPlayer] = useState(null);              // Basic player info (name, ID)
-    const [measurements, setMeasurements] = useState(null);  // Combine measurements (height, weight, wingspan, etc.)
+    const [measurements, setMeasurements] = useState([]);  // Combine measurements (height, weight, wingspan, etc.)
+    const [playerMeasurements, setPlayerMeasurements] = useState(null); // <-- single player's stats
     const [gameLogs, setGameLogs] = useState([]);            // Individual game logs
     const [seasonLogs, setSeasonLogs] = useState([]);        // Season averages
     const [availableSeasons, setAvailableSeasons] = useState([]); // All seasons played
@@ -23,11 +25,14 @@ const StatsMeasurementsPage = () => {
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
                 setPlayer(foundPlayer);
 
-                // Find measurements (optional chaining in case data is missing)
-                const foundMeasurements = data.measurements?.find(
+                // Find measurements
+                const allMeasurements = data.measurements || [];
+                setMeasurements(allMeasurements);
+
+                const foundPlayerMeasurements = allMeasurements.find(
                     m => m.playerId?.toString() === id
                 );
-                setMeasurements(foundMeasurements);
+                setPlayerMeasurements(foundPlayerMeasurements);
 
                 // Filter game logs belonging to this player
                 const gameLogsForPlayer = data.game_logs?.filter(
@@ -99,23 +104,27 @@ const StatsMeasurementsPage = () => {
                 <button>Write Scouting Report</button>
             </Link>
 
-            {measurements ? (
-                <ul>
-                    {/* Display individual measurement fields */}
-                    <li><strong>Height (No Shoes):</strong> {measurements.heightNoShoes}"</li>
-                    <li><strong>Height (With Shoes):</strong> {measurements.heightShoes}"</li>
-                    <li><strong>Wingspan:</strong> {measurements.wingspan}"</li>
-                    <li><strong>Standing Reach:</strong> {measurements.reach}"</li>
-                    <li><strong>Weight:</strong> {measurements.weight} lbs</li>
-                    <li><strong>Max Vertical:</strong> {measurements.maxVertical}"</li>
-                    <li><strong>No-Step Vertical:</strong> {measurements.noStepVertical}"</li>
-                    <li><strong>Hand Length:</strong> {measurements.handLength}"</li>
-                    <li><strong>Hand Width:</strong> {measurements.handWidth}"</li>
-                    <li><strong>Agility:</strong> {measurements.agility} sec</li>
-                    <li><strong>Sprint:</strong> {measurements.sprint} sec</li>
-                    <li><strong>Shuttle Best:</strong> {measurements.shuttleBest} sec</li>
-                    <li><strong>Body Fat %:</strong> {measurements.bodyFat ?? 'N/A'}</li>
-                </ul>
+            {playerMeasurements ? (
+                <>
+                    <ul>
+                        <li><strong>Height (No Shoes):</strong> {playerMeasurements.heightNoShoes ?? 'N/A'}"</li>
+                        <li><strong>Height (With Shoes):</strong> {playerMeasurements.heightShoes ?? 'N/A'}"</li>
+                        <li><strong>Wingspan:</strong> {playerMeasurements.wingspan ?? 'N/A'}"</li>
+                        <li><strong>Standing Reach:</strong> {playerMeasurements.reach ?? 'N/A'}"</li>
+                        <li><strong>Weight:</strong> {playerMeasurements.weight ?? 'N/A'} lbs</li>
+                        <li><strong>Max Vertical:</strong> {playerMeasurements.maxVertical ?? 'N/A'}"</li>
+                        <li><strong>No-Step Vertical:</strong> {playerMeasurements.noStepVertical ?? 'N/A'}"</li>
+                        <li><strong>Hand Length:</strong> {playerMeasurements.handLength ?? 'N/A'}"</li>
+                        <li><strong>Hand Width:</strong> {playerMeasurements.handWidth ?? 'N/A'}"</li>
+                        <li><strong>Agility:</strong> {playerMeasurements.agility ?? 'N/A'} sec</li>
+                        <li><strong>Sprint:</strong> {playerMeasurements.sprint ?? 'N/A'} sec</li>
+                        <li><strong>Shuttle Best:</strong> {playerMeasurements.shuttleBest ?? 'N/A'} sec</li>
+                        <li><strong>Body Fat %:</strong> {playerMeasurements.bodyFat ?? 'N/A'}</li>
+                    </ul>
+
+                    {/* Now pass the full list for comparison */}
+                    <MeasurementComparison player={player} measurements={measurements} />
+                </>
             ) : (
                 <p>No measurements available for this player.</p>
             )}
