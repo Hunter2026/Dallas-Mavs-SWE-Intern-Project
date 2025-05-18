@@ -10,6 +10,10 @@ Installing React Chart:
 
 npm install recharts
 
+Installing MUI Packages:
+
+npm install @mui/material @emotion/react @emotion/styled
+
 Running the program: 
 
 npm run dev
@@ -52,4 +56,6 @@ In addition to the new functionality in the big board, I implemented a compariso
 to compare measurements and statistics with each other. The user can see the players that have been added to the comparison tool with a
 comparison chart at the top of the big board. Inside the comparison tool page, the user can see the measurements and statistics in written form
 and bar chart form, offering a visual interpretation instead of text. 
+
+Lastly, I implemented Material UI components all throughout my project, making the features easy to navigate and appealing to the user. 
 

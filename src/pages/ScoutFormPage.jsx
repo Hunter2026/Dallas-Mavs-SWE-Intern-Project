@@ -1,22 +1,35 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SummaryGenerator from '../components/SummaryGenerator';
+import {
+    Container,
+    Typography,
+    TextField,
+    Button,
+    MenuItem,
+    Select,
+    InputLabel,
+    FormControl,
+    Slider,
+    Box,
+    Paper,
+    Grid,
+    Alert
+} from '@mui/material';
 
-// Define constant dropdown options for roles, ceilings, draft range, and traits
+// Dropdown constants
 const roles = ['Starter', 'Role Player', 'Bench', 'Developmental'];
 const ceilings = ['Hall of Famer', 'All-NBA', 'All-Star', 'High-Level Starter', 'Starter', 'Rotation Player', 'Fringe Roster'];
 const draftRanges = ['Lottery', 'Mid 1st', 'Late 1st', '2nd Round', 'Undrafted'];
 const traits = ['Shooting', 'Ball Handling', 'Defense', 'Athleticism', 'IQ', 'Motor'];
 
-// Main component for the scouting form page
 const ScoutFormPage = ({ onSubmit }) => {
-    const { id } = useParams(); // Get the player ID from the URL
-    const [player, setPlayer] = useState(null); // Store the fetched player object
-    const [submittedReport, setSubmittedReport] = useState(null); // Store the most recent scouting report
+    const { id } = useParams();
+    const [player, setPlayer] = useState(null);
+    const [submittedReport, setSubmittedReport] = useState(null);
+    const reportRef = useRef(null);
 
-    const reportRef = useRef(null); // Ref to scroll to the report summary when it's submitted
-
-    // State variables for form fields
+    // Form fields state
     const [strengths, setStrengths] = useState('');
     const [weaknesses, setWeaknesses] = useState('');
     const [comparison, setComparison] = useState('');
@@ -24,12 +37,10 @@ const ScoutFormPage = ({ onSubmit }) => {
     const [role, setRole] = useState('');
     const [ceiling, setCeiling] = useState('');
     const [range, setRange] = useState('');
-    const [ratings, setRatings] = useState(
-        traits.reduce((acc, trait) => ({ ...acc, [trait]: 5 }), {}) // Default all traits to 5/10
-    );
-    const [error, setError] = useState(null); // Track validation errors
+    const [ratings, setRatings] = useState(traits.reduce((acc, t) => ({ ...acc, [t]: 5 }), {}));
+    const [error, setError] = useState(null);
 
-    // Fetch player bio from JSON file on component mount or when `id` changes
+    // Fetch player info on mount
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
@@ -39,31 +50,21 @@ const ScoutFormPage = ({ onSubmit }) => {
             });
     }, [id]);
 
-    // Handler for updating a specific trait's value
+    // Update trait rating
     const handleChange = (trait, value) => {
         setRatings(prev => ({ ...prev, [trait]: Number(value) }));
     };
 
-    // Form submit handler
+    // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Validate required fields and ratings range
-        if (
-            !strengths.trim() ||
-            !weaknesses.trim() ||
-            !comparison.trim() ||
-            !fit.trim() ||
-            !role ||
-            !ceiling ||
-            !range ||
-            Object.values(ratings).some(val => typeof val !== 'number' || val < 0 || val > 10)
-        ) {
+        // Validate all required fields
+        if (!strengths.trim() || !weaknesses.trim() || !comparison.trim() || !fit.trim() || !role || !ceiling || !range || Object.values(ratings).some(val => typeof val !== 'number' || val < 0 || val > 10)) {
             setError('Please complete all fields before submitting.');
             return;
         }
 
-        // Create the scouting report object
         const report = {
             strengths,
             weaknesses,
@@ -73,34 +74,29 @@ const ScoutFormPage = ({ onSubmit }) => {
             ceiling,
             range,
             ratings,
-            createdAt: new Date().toLocaleString(), // Timestamp
+            createdAt: new Date().toLocaleString(),
         };
 
-        // Pass report to parent handler if provided, else fallback to console log
         if (onSubmit) {
             onSubmit(report);
         } else {
             console.log('Scouting Report:', report);
         }
 
-        // Save latest report to local state
         setSubmittedReport(report);
 
-        // Load existing reports from localStorage and prepend new one
         const existing = localStorage.getItem(`report_player_${id}`);
         let existingReports = [];
-
         try {
             const parsed = JSON.parse(existing);
-            existingReports = Array.isArray(parsed) ? parsed : [parsed]; // Legacy single report support
+            existingReports = Array.isArray(parsed) ? parsed : [parsed];
         } catch {
             existingReports = [];
         }
-
         const updatedReports = [report, ...existingReports];
         localStorage.setItem(`report_player_${id}`, JSON.stringify(updatedReports));
 
-        // Reset the form inputs
+        // Reset fields
         setStrengths('');
         setWeaknesses('');
         setComparison('');
@@ -112,7 +108,7 @@ const ScoutFormPage = ({ onSubmit }) => {
         setError(null);
     };
 
-    // Smooth scroll to report after submission
+    // Scroll to submitted report
     useEffect(() => {
         if (submittedReport && reportRef.current) {
             setTimeout(() => {
@@ -123,115 +119,150 @@ const ScoutFormPage = ({ onSubmit }) => {
         }
     }, [submittedReport]);
 
-    // Display loading indicator until player is loaded
-    if (!player) return <p>Loading player info...</p>;
+    if (!player) return <Typography>Loading player info...</Typography>;
 
     return (
-        <div style={{ padding: '1rem' }}>
-            {/* Back button to player profile */}
-            <Link to={`/player/${player.playerId}`} style={{ display: 'inline-block', marginBottom: '1rem' }}>
-                ← Back to Player Profile
-            </Link>
+        <Container maxWidth="md" sx={{ py: 4 }}>
+            {/* NBA Scout Report in Top Right */}
+            <Box sx={{ position: 'absolute', top: 16, right: 100 }}>
+                <img
+                    src="/NBA Scout Report.png"
+                    alt="NBA Scout Report Logo"
+                    style={{ width: 350, height: 'auto' }}
+                />
+            </Box>
 
-            {/* Player name and section title */}
-            <h2>{player.name} - Scouting Report</h2>
+            {/* Back to profile */}
+            <Box mb={2}>
+                <Button component={Link} to={`/player/${player.playerId}`} variant="outlined">
+                    ← Back to Player Profile
+                </Button>
+            </Box>
 
-            {/* Button to navigate to player stats page */}
-            <Link to={`/player/${id}/stats`}>
-                <button style={{ marginBottom: '1rem' }}>View Stats & Measurements</button>
-            </Link>
+            <Typography variant="h4" gutterBottom>{player.name} - Scouting Report</Typography>
 
-            {/* Scouting form begins */}
-            <form onSubmit={handleSubmit} style={{ marginTop: '2rem' }}>
-                <h4>Scouting Evaluation</h4>
-                {error && <p style={{ color: 'red' }}>{error}</p>}
+            {/* Link to stats */}
+            <Box mb={2}>
+                <Button component={Link} to={`/player/${id}/stats`} variant="contained">
+                    View Stats & Measurements
+                </Button>
+            </Box>
 
-                {/* Strengths field */}
-                <label><strong>Strengths:</strong> <span style={{ fontSize: '0.9em', color: '#666' }}>({strengths.trim().split(/\s+/).filter(Boolean).length} words)</span></label><br />
-                <textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} rows={2} cols={50} /><br /><br />
+            {/* Scouting Form */}
+            <Paper sx={{ p: 3 }} component="form" onSubmit={handleSubmit}>
+                <Typography variant="h6" gutterBottom>Scouting Evaluation</Typography>
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                {/* Weaknesses field */}
-                <label><strong>Weaknesses:</strong> <span style={{ fontSize: '0.9em', color: '#666' }}>({weaknesses.trim().split(/\s+/).filter(Boolean).length} words)</span></label><br />
-                <textarea value={weaknesses} onChange={(e) => setWeaknesses(e.target.value)} rows={2} cols={50} /><br /><br />
+                {/* Text fields */}
+                <TextField
+                    label={`Strengths (${strengths.trim().split(/\s+/).filter(Boolean).length} words)`}
+                    multiline
+                    fullWidth
+                    rows={2}
+                    value={strengths}
+                    onChange={(e) => setStrengths(e.target.value)}
+                    margin="normal"
+                />
+                <TextField
+                    label={`Weaknesses (${weaknesses.trim().split(/\s+/).filter(Boolean).length} words)`}
+                    multiline
+                    fullWidth
+                    rows={2}
+                    value={weaknesses}
+                    onChange={(e) => setWeaknesses(e.target.value)}
+                    margin="normal"
+                />
+                <TextField
+                    label="Player Comparison"
+                    fullWidth
+                    value={comparison}
+                    onChange={(e) => setComparison(e.target.value)}
+                    margin="normal"
+                />
+                <TextField
+                    label="Best NBA Fit (Team)"
+                    fullWidth
+                    value={fit}
+                    onChange={(e) => setFit(e.target.value)}
+                    margin="normal"
+                />
 
-                {/* Player comparison */}
-                <label><strong>Player Comparison:</strong></label><br />
-                <input value={comparison} onChange={(e) => setComparison(e.target.value)} /><br /><br />
-
-                {/* Best team fit */}
-                <label><strong>Best NBA Fit (Team):</strong></label><br />
-                <input value={fit} onChange={(e) => setFit(e.target.value)} /><br /><br />
-
-                {/* Role selector */}
-                <label><strong>Projected Role:</strong></label><br />
-                <select value={role} onChange={(e) => setRole(e.target.value)}>
-                    <option value="">-- Select --</option>
-                    {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                </select><br /><br />
-
-                {/* Ceiling selector */}
-                <label><strong>Projected Ceiling:</strong></label><br />
-                <select value={ceiling} onChange={(e) => setCeiling(e.target.value)}>
-                    <option value="">-- Select --</option>
-                    {ceilings.map(c => <option key={c} value={c}>{c}</option>)}
-                </select><br /><br />
-
-                {/* Draft range selector */}
-                <label><strong>Draft Range:</strong></label><br />
-                <select value={range} onChange={(e) => setRange(e.target.value)}>
-                    <option value="">-- Select --</option>
-                    {draftRanges.map(r => <option key={r} value={r}>{r}</option>)}
-                </select><br /><br />
+                {/* Select dropdowns with improved width */}
+                <Grid container spacing={2} mt={1}>
+                    <Grid item xs={12} sm={4}>
+                        <FormControl fullWidth>
+                            <InputLabel>Projected Role</InputLabel>
+                            <Select value={role} label="Projected Role" onChange={(e) => setRole(e.target.value)} sx={{ minWidth: 250 }}>
+                                {roles.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                        <FormControl fullWidth>
+                            <InputLabel>Ceiling</InputLabel>
+                            <Select value={ceiling} label="Ceiling" onChange={(e) => setCeiling(e.target.value)} sx={{ minWidth: 250 }}>
+                                {ceilings.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                        <FormControl fullWidth>
+                            <InputLabel>Draft Range</InputLabel>
+                            <Select value={range} label="Draft Range" onChange={(e) => setRange(e.target.value)} sx={{ minWidth: 250 }}>
+                                {draftRanges.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                </Grid>
 
                 {/* Trait sliders */}
-                <fieldset style={{ border: '1px solid #ccc', padding: '1rem' }}>
-                    <legend><strong>Trait Ratings (0–10):</strong></legend>
+                <Box mt={4}>
+                    <Typography variant="subtitle1" gutterBottom>Trait Ratings (0–10)</Typography>
                     {traits.map(trait => (
-                        <div key={trait} style={{ marginBottom: '0.5rem' }}>
-                            <label>{trait}: {ratings[trait]}</label><br />
-                            <input
-                                type="range"
-                                min="0"
-                                max="10"
+                        <Box key={trait} sx={{ mb: 2 }}>
+                            <Typography gutterBottom>{trait}: {ratings[trait]}</Typography>
+                            <Slider
                                 value={ratings[trait]}
-                                onChange={(e) => handleChange(trait, e.target.value)}
+                                min={0}
+                                max={10}
+                                step={1}
+                                onChange={(e, val) => handleChange(trait, val)}
+                                valueLabelDisplay="auto"
                             />
-                        </div>
+                        </Box>
                     ))}
-                </fieldset>
+                </Box>
 
                 {/* Submit button */}
-                <button type="submit" style={{ marginTop: '1rem' }}>Submit Scouting Report</button>
-            </form>
+                <Button type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
+                    Submit Scouting Report
+                </Button>
+            </Paper>
 
-            {/* Confirmation section with submitted report and summary */}
+            {/* Submitted report display */}
             {submittedReport && (
-                <div
-                    ref={reportRef}
-                    style={{ marginTop: '2rem', background: '#f9f9f9', padding: '1rem', borderRadius: '6px' }}>
-                    <h4>Report Submitted</h4>
-                    <p><strong>Submitted:</strong> {submittedReport.createdAt}</p>
-                    <p><strong>Strengths:</strong> {submittedReport.strengths}</p>
-                    <p><strong>Weaknesses:</strong> {submittedReport.weaknesses}</p>
-                    <p><strong>Player Comparison:</strong> {submittedReport.comparison}</p>
-                    <p><strong>Best NBA Fit:</strong> {submittedReport.fit}</p>
-                    <p><strong>Projected Role:</strong> {submittedReport.role}</p>
-                    <p><strong>Projected Ceiling:</strong> {submittedReport.ceiling}</p>
-                    <p><strong>Draft Range:</strong> {submittedReport.range}</p>
-
-                    {/* Trait summary list */}
-                    <h5>Trait Ratings:</h5>
-                    <ul>
-                        {Object.entries(submittedReport.ratings).map(([trait, value]) => (
-                            <li key={trait}><strong>{trait}:</strong> {value}</li>
-                        ))}
-                    </ul>
-
-                    {/* Auto-generated summary */}
+                <Box ref={reportRef} mt={4} p={3} bgcolor="#f9f9f9" borderRadius={2}>
+                    <Typography variant="h6">Report Submitted</Typography>
+                    <Typography variant="body2" gutterBottom><strong>Submitted:</strong> {submittedReport.createdAt}</Typography>
+                    <Typography><strong>Strengths:</strong> {submittedReport.strengths}</Typography>
+                    <Typography><strong>Weaknesses:</strong> {submittedReport.weaknesses}</Typography>
+                    <Typography><strong>Player Comparison:</strong> {submittedReport.comparison}</Typography>
+                    <Typography><strong>Best NBA Fit:</strong> {submittedReport.fit}</Typography>
+                    <Typography><strong>Projected Role:</strong> {submittedReport.role}</Typography>
+                    <Typography><strong>Projected Ceiling:</strong> {submittedReport.ceiling}</Typography>
+                    <Typography><strong>Draft Range:</strong> {submittedReport.range}</Typography>
+                    <Box mt={2}>
+                        <Typography variant="subtitle1">Trait Ratings:</Typography>
+                        <ul>
+                            {Object.entries(submittedReport.ratings).map(([trait, value]) => (
+                                <li key={trait}><strong>{trait}:</strong> {value}</li>
+                            ))}
+                        </ul>
+                    </Box>
                     <SummaryGenerator report={submittedReport} />
-                </div>
+                </Box>
             )}
-        </div>
+        </Container>
     );
 };
 

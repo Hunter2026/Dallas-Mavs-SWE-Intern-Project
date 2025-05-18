@@ -3,6 +3,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
     ResponsiveContainer, LabelList
 } from 'recharts';
+import { Box, Typography, Paper } from '@mui/material';
 
 // === Stats to visualize in the career stats chart ===
 const statKeys = ['PTS', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'FG%', '3P%', 'FTP'];
@@ -24,11 +25,8 @@ const measurementKeys = [
     { key: 'bodyFat', label: 'Body Fat %' }
 ];
 
-// Colors used for bars corresponding to each player (supports up to 3)
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658'];
 
-// === Custom tooltip component ===
-// Shows tooltips with units or 'N/A' if data is missing
 const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
 
@@ -51,103 +49,101 @@ const CustomTooltip = ({ active, payload, label }) => {
     const unit = unitsMap[label] || '';
 
     return (
-        <div style={{ background: 'white', border: '1px solid #ccc', padding: 10 }}>
-            <strong>{label}</strong>
-            <ul style={{ margin: 0, paddingLeft: 15 }}>
+        <Paper elevation={3} sx={{ p: 2 }}>
+            <Typography variant="subtitle1"><strong>{label}</strong></Typography>
+            <ul style={{ margin: 0, paddingLeft: 16 }}>
                 {payload.map((entry, index) => (
                     <li key={index}>
                         {entry.name}: {entry.value !== null ? `${entry.value}${unit}` : 'N/A'}
                     </li>
                 ))}
             </ul>
-        </div>
+        </Paper>
     );
 };
 
-// === Main chart component that renders both measurement and career stat comparisons ===
 const CompareChart = ({ players, seasonLogs, measurements }) => {
     if (!players || players.length === 0) return null;
 
-    // === Build chart data for career stats ===
     const careerStatData = statKeys.map(stat => {
-        const row = { stat }; // X-axis label
-
-        players.forEach((player) => {
-            // Filter logs for this player
+        const row = { stat };
+        players.forEach(player => {
             const logs = seasonLogs.filter(
                 l => l.playerId?.toString() === player.playerId.toString()
             );
-            const totalGP = logs.reduce((sum, l) => sum + l.GP, 0); // Total games played
-            const total = logs.reduce((sum, l) => sum + (l[stat] ?? 0) * l.GP, 0); // Weighted stat total
-            const avg = totalGP > 0 ? total / totalGP : 0; // Avoid division by zero
-            row[player.name] = Number(avg.toFixed(1)); // Add player's stat avg to row
+            const totalGP = logs.reduce((sum, l) => sum + l.GP, 0);
+            const total = logs.reduce((sum, l) => sum + (l[stat] ?? 0) * l.GP, 0);
+            const avg = totalGP > 0 ? total / totalGP : 0;
+            row[player.name] = Number(avg.toFixed(1));
         });
-
         return row;
     });
 
-    // === Build chart data for measurements ===
     const measurementChartData = measurementKeys.map(({ key, label }) => {
-        const row = { measurement: label }; // X-axis label
-
+        const row = { measurement: label };
         players.forEach(player => {
             const m = measurements.find(m => m.playerId?.toString() === player.playerId.toString());
-            row[player.name] = m && typeof m[key] === 'number' ? m[key] : null; // Add value or null
+            row[player.name] = m && typeof m[key] === 'number' ? m[key] : null;
         });
-
         return row;
     });
 
     return (
-        <div style={{ marginTop: '2rem' }}>
-            {/* === Measurement Bar Chart === */}
-            <h3 style={{ marginTop: '3rem' }}>Measurement Comparison</h3>
-            <ResponsiveContainer width="150%" height={500}>
-                <BarChart
-                    data={measurementChartData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="measurement" interval={0} />
-                    <YAxis />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    {players.map((player, index) => (
-                        <Bar
-                            key={player.playerId + '_m'}
-                            dataKey={player.name}
-                            fill={COLORS[index % COLORS.length]}
+        <Box sx={{ mt: 6 }}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>Measurement Comparison</Typography>
+            <Box sx={{ overflowX: 'auto' }}>
+                <Box sx={{ minWidth: 1500 }}>
+                    <ResponsiveContainer width="150%" height={500}>
+                        <BarChart
+                            data={measurementChartData}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
                         >
-                            <LabelList dataKey={player.name} position="top" />
-                        </Bar>
-                    ))}
-                </BarChart>
-            </ResponsiveContainer>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="measurement" interval={0} />
+                            <YAxis />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
+                            {players.map((player, index) => (
+                                <Bar
+                                    key={player.playerId + '_m'}
+                                    dataKey={player.name}
+                                    fill={COLORS[index % COLORS.length]}
+                                >
+                                    <LabelList dataKey={player.name} position="top" />
+                                </Bar>
+                            ))}
+                        </BarChart>
+                    </ResponsiveContainer>
+                </Box>
+            </Box>
 
-            {/* === Career Stat Bar Chart === */}
-            <h3>Career Stat Comparison</h3>
-            <ResponsiveContainer width="125%" height={500}>
-                <BarChart
-                    data={careerStatData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="stat" />
-                    <YAxis />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    {players.map((player, index) => (
-                        <Bar
-                            key={player.playerId}
-                            dataKey={player.name}
-                            fill={COLORS[index % COLORS.length]}
+            <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: 600 }}>Career Stat Comparison</Typography>
+            <Box sx={{ overflowX: 'auto' }}>
+                <Box sx={{ minWidth: 1200 }}>
+                    <ResponsiveContainer width="120%" height={500}>
+                        <BarChart
+                            data={careerStatData}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
                         >
-                            <LabelList dataKey={player.name} position="top" />
-                        </Bar>
-                    ))}
-                </BarChart>
-            </ResponsiveContainer>
-        </div>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="stat" />
+                            <YAxis />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
+                            {players.map((player, index) => (
+                                <Bar
+                                    key={player.playerId}
+                                    dataKey={player.name}
+                                    fill={COLORS[index % COLORS.length]}
+                                >
+                                    <LabelList dataKey={player.name} position="top" />
+                                </Bar>
+                            ))}
+                        </BarChart>
+                    </ResponsiveContainer>
+                </Box>
+            </Box>
+        </Box>
     );
 };
 

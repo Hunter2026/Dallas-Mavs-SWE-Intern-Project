@@ -2,301 +2,302 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PlayerDevelopment from '../components/PlayerDevelopment';
 import MeasurementComparison from '../components/MeasurementComparison';
+import {
+    Container,
+    Typography,
+    Box,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Button,
+} from '@mui/material';
 
 const StatsMeasurementsPage = () => {
-    const { id } = useParams(); // Extract player ID from URL params
+    const { id } = useParams();
+    const [player, setPlayer] = useState(null);
+    const [measurements, setMeasurements] = useState([]);
+    const [playerMeasurements, setPlayerMeasurements] = useState(null);
+    const [gameLogs, setGameLogs] = useState([]);
+    const [seasonLogs, setSeasonLogs] = useState([]);
+    const [availableSeasons, setAvailableSeasons] = useState([]);
+    const [selectedSeason, setSelectedSeason] = useState(null);
+    const [sortByStat, setSortByStat] = useState(null);
 
-    // State hooks to store player data
-    const [player, setPlayer] = useState(null);              // Basic player info (name, ID)
-    const [measurements, setMeasurements] = useState([]);  // Combine measurements (height, weight, wingspan, etc.)
-    const [playerMeasurements, setPlayerMeasurements] = useState(null); // <-- single player's stats
-    const [gameLogs, setGameLogs] = useState([]);            // Individual game logs
-    const [seasonLogs, setSeasonLogs] = useState([]);        // Season averages
-    const [availableSeasons, setAvailableSeasons] = useState([]); // All seasons played
-    const [selectedSeason, setSelectedSeason] = useState(null);   // Current season to display
-    const [sortByStat, setSortByStat] = useState(null);      // Stat to sort game logs by
-
-    // Load all player-related data when the component mounts
+    // Load all player-related data
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
-                // Find player bio
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
                 setPlayer(foundPlayer);
 
-                // Find measurements
                 const allMeasurements = data.measurements || [];
                 setMeasurements(allMeasurements);
-
-                const foundPlayerMeasurements = allMeasurements.find(
-                    m => m.playerId?.toString() === id
-                );
+                const foundPlayerMeasurements = allMeasurements.find(m => m.playerId?.toString() === id);
                 setPlayerMeasurements(foundPlayerMeasurements);
 
-                // Filter game logs belonging to this player
-                const gameLogsForPlayer = data.game_logs?.filter(
-                    g => g.playerId?.toString() === id
-                ) || [];
+                const gameLogsForPlayer = data.game_logs?.filter(g => g.playerId?.toString() === id) || [];
                 setGameLogs(gameLogsForPlayer);
 
-                // Filter season averages for this player
-                const logsForPlayer = data.seasonLogs?.filter(
-                    s => s.playerId?.toString() === id
-                ) || [];
+                const logsForPlayer = data.seasonLogs?.filter(s => s.playerId?.toString() === id) || [];
                 setSeasonLogs(logsForPlayer);
 
-                // Combine unique seasons from both game logs and season logs
                 const seasonsFromGames = gameLogsForPlayer.map(g => g.season);
                 const seasonsFromAverages = logsForPlayer.map(s => s.Season);
                 const combinedSeasons = [...new Set([...seasonsFromGames, ...seasonsFromAverages])].sort((a, b) => b - a);
                 setAvailableSeasons(combinedSeasons);
-
-                // Default to the most recent season
-                if (combinedSeasons.length > 0) {
-                    setSelectedSeason(combinedSeasons[0]);
-                }
+                if (combinedSeasons.length > 0) setSelectedSeason(combinedSeasons[0]);
             });
     }, [id]);
 
-    // Loading screen while data fetch is pending
-    if (!player) return <p>Loading player data...</p>;
+    if (!player) return <Typography>Loading player data...</Typography>;
 
-    // Filter game logs by selected season
     const filteredLogs = gameLogs.filter(g => g.season === selectedSeason);
     let displayedLogs = [...filteredLogs];
 
-    // Sort game logs if a specific stat is selected
     if (sortByStat) {
         displayedLogs.sort((a, b) => {
-            let valA, valB;
-
-            if (sortByStat === 'timePlayed') {
-                // Convert "MM:SS" time format to numeric minutes for sorting
-                const toMinutes = (str) => {
-                    if (!str || !str.includes(':')) return -Infinity;
-                    const [min, sec] = str.split(':').map(Number);
-                    return min + sec / 60;
-                };
-                valA = toMinutes(a.timePlayed);
-                valB = toMinutes(b.timePlayed);
-            } else {
-                // Default numeric sorting, fallback to -Infinity for missing data
-                valA = typeof a[sortByStat] === 'number' ? a[sortByStat] : -Infinity;
-                valB = typeof b[sortByStat] === 'number' ? b[sortByStat] : -Infinity;
-            }
-
-            return valB - valA; // Descending order
+            const toMinutes = str => {
+                if (!str || !str.includes(':')) return -Infinity;
+                const [min, sec] = str.split(':').map(Number);
+                return min + sec / 60;
+            };
+            const valA = sortByStat === 'timePlayed' ? toMinutes(a.timePlayed) : a[sortByStat] ?? -Infinity;
+            const valB = sortByStat === 'timePlayed' ? toMinutes(b.timePlayed) : b[sortByStat] ?? -Infinity;
+            return valB - valA;
         });
     }
 
     return (
-        <div style={{ padding: '1rem' }}>
-            {/* Navigation back to player profile */}
-            <Link to={`/player/${player.playerId}`} style={{ display: 'block', marginBottom: '1rem' }}>
-                ← Back to Player Profile
-            </Link>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+            {/* NBA Draft Combine Photos in Top Right */}
+            <Box sx={{ position: 'absolute', top: 16, right: 600 }}>
+                <img
+                    src="/NBA Draft Combine 1.png"
+                    alt="NBA Draft Combine Logo"
+                    style={{ width: 250, height: 'auto' }}
+                />
+            </Box>
 
-            {/* === Player Measurements Section === */}
-            <h2>{player.name} – Measurements</h2>
+            <Box sx={{ position: 'absolute', top: 16, right: 300 }}>
+                <img
+                    src="/NBA Draft Combine 2.png"
+                    alt="NBA Draft Combine Logo"
+                    style={{ width: 280, height: 'auto' }}
+                />
+            </Box>
 
-            <Link to={`/player/${id}/scouting`} style={{ display: 'block', marginBottom: '1rem' }}>
-                <button>Write Scouting Report</button>
-            </Link>
+            <Box sx={{ position: 'absolute', top: 16, right: 25 }}>
+                <img
+                    src="/NBA Draft Combine 3.png"
+                    alt="NBA Draft Combine Logo"
+                    style={{ width: 250, height: 'auto' }}
+                />
+            </Box>
+
+            {/* Header navigation */}
+            <Box mb={2}>
+                <Button component={Link} to={`/player/${player.playerId}`} variant="outlined">
+                    ← Back to Player Profile
+                </Button>
+            </Box>
+
+            {/* Measurements */}
+            <Typography variant="h4" gutterBottom>{player.name} – Measurements</Typography>
+            <Button component={Link} to={`/player/${id}/scouting`} variant="contained" sx={{ mb: 2 }}>
+                Write Scouting Report
+            </Button>
 
             {playerMeasurements ? (
-                <>
+                <Paper sx={{ p: 2, mb: 4 }}>
                     <ul>
-                        <li><strong>Height (No Shoes):</strong> {playerMeasurements.heightNoShoes ?? 'N/A'}"</li>
-                        <li><strong>Height (With Shoes):</strong> {playerMeasurements.heightShoes ?? 'N/A'}"</li>
-                        <li><strong>Wingspan:</strong> {playerMeasurements.wingspan ?? 'N/A'}"</li>
-                        <li><strong>Standing Reach:</strong> {playerMeasurements.reach ?? 'N/A'}"</li>
-                        <li><strong>Weight:</strong> {playerMeasurements.weight ?? 'N/A'} lbs</li>
-                        <li><strong>Max Vertical:</strong> {playerMeasurements.maxVertical ?? 'N/A'}"</li>
-                        <li><strong>No-Step Vertical:</strong> {playerMeasurements.noStepVertical ?? 'N/A'}"</li>
-                        <li><strong>Hand Length:</strong> {playerMeasurements.handLength ?? 'N/A'}"</li>
-                        <li><strong>Hand Width:</strong> {playerMeasurements.handWidth ?? 'N/A'}"</li>
-                        <li><strong>Agility:</strong> {playerMeasurements.agility ?? 'N/A'} sec</li>
-                        <li><strong>Sprint:</strong> {playerMeasurements.sprint ?? 'N/A'} sec</li>
-                        <li><strong>Shuttle Best:</strong> {playerMeasurements.shuttleBest ?? 'N/A'} sec</li>
-                        <li><strong>Body Fat %:</strong> {playerMeasurements.bodyFat ?? 'N/A'}</li>
+                        <li><strong>Height (No Shoes):</strong> {playerMeasurements.heightNoShoes ? `${playerMeasurements.heightNoShoes}"` : 'N/A'}</li>
+                        <li><strong>Height (With Shoes):</strong> {playerMeasurements.heightShoes ? `${playerMeasurements.heightShoes}"` : 'N/A'}</li>
+                        <li><strong>Wingspan:</strong> {playerMeasurements.wingspan ? `${playerMeasurements.wingspan}"` : 'N/A'}</li>
+                        <li><strong>Standing Reach:</strong> {playerMeasurements.reach ? `${playerMeasurements.reach}"` : 'N/A'}</li>
+                        <li><strong>Weight:</strong> {playerMeasurements.weight ? `${playerMeasurements.weight} lbs` : 'N/A'}</li>
+                        <li><strong>Max Vertical:</strong> {playerMeasurements.maxVertical ? `${playerMeasurements.maxVertical}"` : 'N/A'}</li>
+                        <li><strong>No-Step Vertical:</strong> {playerMeasurements.noStepVertical ? `${playerMeasurements.noStepVertical}"` : 'N/A'}</li>
+                        <li><strong>Hand Length:</strong> {playerMeasurements.handLength ? `${playerMeasurements.handLength}"` : 'N/A'}</li>
+                        <li><strong>Hand Width:</strong> {playerMeasurements.handWidth ? `${playerMeasurements.handWidth}"` : 'N/A'}</li>
+                        <li><strong>Agility:</strong> {playerMeasurements.agility ? `${playerMeasurements.agility} sec` : 'N/A'}</li>
+                        <li><strong>Sprint:</strong> {playerMeasurements.sprint ? `${playerMeasurements.sprint} sec` : 'N/A'}</li>
+                        <li><strong>Shuttle Best:</strong> {playerMeasurements.shuttleBest ? `${playerMeasurements.shuttleBest} sec` : 'N/A'}</li>
+                        <li><strong>Body Fat %:</strong> {playerMeasurements.bodyFat ? `${playerMeasurements.bodyFat}%` : 'N/A'}</li>
                     </ul>
-
-                    {/* Now pass the full list for comparison */}
                     <MeasurementComparison player={player} measurements={measurements} />
-                </>
-            ) : (
-                <p>No measurements available for this player.</p>
-            )}
+                </Paper>
+            ) : <Typography>No measurements available for this player.</Typography>}
 
-            {/* === Career Averages Section === */}
-            <h2 style={{ marginTop: '2rem' }}>{player.name} – Career Averages</h2>
-            {seasonLogs.length > 0 ? (
-                (() => {
-                    const totalGP = seasonLogs.reduce((sum, s) => sum + s.GP, 0);
+            {/* Career Averages */}
+            <Typography variant="h4" gutterBottom>{player.name} – Career Averages</Typography>
+            {seasonLogs.length > 0 ? (() => {
+                const totalGP = seasonLogs.reduce((sum, s) => sum + s.GP, 0);
+                const weightedAvg = (key) => {
+                    const total = seasonLogs.reduce((sum, s) => sum + (s[key] ?? 0) * s.GP, 0);
+                    return totalGP > 0 ? (total / totalGP).toFixed(1) : '—';
+                };
+                return (
+                    <TableContainer component={Paper} sx={{ mb: 6 }}$1>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>GP</TableCell><TableCell>MP</TableCell><TableCell>PTS</TableCell><TableCell>REB</TableCell><TableCell>AST</TableCell>
+                                    <TableCell>STL</TableCell><TableCell>BLK</TableCell><TableCell>TOV</TableCell><TableCell>Fouls</TableCell>
+                                    <TableCell>FG%</TableCell><TableCell>3P%</TableCell><TableCell>FT%</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell>{totalGP}</TableCell>
+                                    <TableCell>{weightedAvg('MP')}</TableCell>
+                                    <TableCell>{weightedAvg('PTS')}</TableCell>
+                                    <TableCell>{weightedAvg('TRB')}</TableCell>
+                                    <TableCell>{weightedAvg('AST')}</TableCell>
+                                    <TableCell>{weightedAvg('STL')}</TableCell>
+                                    <TableCell>{weightedAvg('BLK')}</TableCell>
+                                    <TableCell>{weightedAvg('TOV')}</TableCell>
+                                    <TableCell>{weightedAvg('PF')}</TableCell>
+                                    <TableCell>{weightedAvg('FG%')}</TableCell>
+                                    <TableCell>{weightedAvg('3P%')}</TableCell>
+                                    <TableCell>{weightedAvg('FTP')}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                );
+            })() : <Typography>No season data available to calculate career averages.</Typography>}
 
-                    // Weighted average utility based on GP (games played)
-                    const weightedAvg = (key) => {
-                        const total = seasonLogs.reduce((sum, s) => sum + (s[key] ?? 0) * s.GP, 0);
-                        return totalGP > 0 ? (total / totalGP).toFixed(1) : '—';
-                    };
-
-                    // Render averages table
-                    return (
-                        <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
-                            <thead>
-                            <tr>
-                                <th>GP</th><th>MP</th><th>PTS</th><th>REB</th><th>AST</th>
-                                <th>STL</th><th>BLK</th><th>TOV</th><th>Fouls</th>
-                                <th>FG%</th><th>3P%</th><th>FT%</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>{totalGP}</td>
-                                <td>{weightedAvg('MP')}</td>
-                                <td>{weightedAvg('PTS')}</td>
-                                <td>{weightedAvg('TRB')}</td>
-                                <td>{weightedAvg('AST')}</td>
-                                <td>{weightedAvg('STL')}</td>
-                                <td>{weightedAvg('BLK')}</td>
-                                <td>{weightedAvg('TOV')}</td>
-                                <td>{weightedAvg('PF')}</td>
-                                <td>{weightedAvg('FG%')}</td>
-                                <td>{weightedAvg('3P%')}</td>
-                                <td>{weightedAvg('FTP')}</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    );
-                })()
-            ) : (
-                <p>No season data available to calculate career averages.</p>
-            )}
-
-            {/* === Player Development Chart === */}
+            {/* Development Chart */}
             <PlayerDevelopment seasonLogs={seasonLogs} player={player} />
 
-            {/* === Season Selector Dropdown === */}
+            {/* Season dropdown */}
             {availableSeasons.length > 0 && (
-                <div style={{ marginTop: '5rem', marginBottom: '1rem' }}>
-                    <label htmlFor="seasonSelect"><strong>Select Season:</strong>{' '}</label>
-                    <select
-                        id="seasonSelect"
+                <FormControl fullWidth sx={{ mt: 5, mb: 2 }}>
+                    <InputLabel>Select Season</InputLabel>
+                    <Select
                         value={selectedSeason}
+                        label="Select Season"
                         onChange={(e) => setSelectedSeason(Number(e.target.value))}
                     >
                         {availableSeasons.map(season => (
-                            <option key={season} value={season}>{season}</option>
+                            <MenuItem key={season} value={season}>{season}</MenuItem>
                         ))}
-                    </select>
-                </div>
+                    </Select>
+                </FormControl>
             )}
 
-            {/* === Season Averages Table === */}
-            <h2 style={{ marginTop: '2rem', marginBottom: '1rem' }}>{player.name} – Season Averages</h2>
+            {/* Season Averages */}
+            <Typography variant="h4" gutterBottom>{player.name} – Season Averages</Typography>
             {selectedSeason && (() => {
                 const logs = seasonLogs.filter(s => s.Season === selectedSeason);
                 return logs.length > 0 ? (
-                    <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '2rem' }}>
-                        <thead>
-                        <tr>
-                            <th>Team</th><th>League</th><th>GP</th><th>MP</th><th>PTS</th>
-                            <th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th>
-                            <th>Fouls</th><th>FG%</th><th>3P%</th><th>FT%</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {logs.map((seasonLog, index) => (
-                            <tr key={index}>
-                                <td>{seasonLog.Team}</td>
-                                <td>{seasonLog.League}</td>
-                                <td>{seasonLog.GP}</td>
-                                <td>{seasonLog.MP}</td>
-                                <td>{seasonLog.PTS}</td>
-                                <td>{seasonLog.TRB}</td>
-                                <td>{seasonLog.AST}</td>
-                                <td>{seasonLog.STL}</td>
-                                <td>{seasonLog.BLK}</td>
-                                <td>{seasonLog.TOV}</td>
-                                <td>{seasonLog.PF}</td>
-                                <td>{seasonLog['FG%']}</td>
-                                <td>{seasonLog['3P%']}</td>
-                                <td>{seasonLog.FTP}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p>No season stats available for the selected year.</p>
-                );
+                    <TableContainer component={Paper} sx={{ mb: 6 }}$1>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Team</TableCell><TableCell>League</TableCell><TableCell>GP</TableCell><TableCell>MP</TableCell><TableCell>PTS</TableCell>
+                                    <TableCell>REB</TableCell><TableCell>AST</TableCell><TableCell>STL</TableCell><TableCell>BLK</TableCell>
+                                    <TableCell>TOV</TableCell><TableCell>Fouls</TableCell><TableCell>FG%</TableCell><TableCell>3P%</TableCell><TableCell>FT%</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {logs.map((seasonLog, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{seasonLog.Team}</TableCell>
+                                        <TableCell>{seasonLog.League}</TableCell>
+                                        <TableCell>{seasonLog.GP}</TableCell>
+                                        <TableCell>{seasonLog.MP}</TableCell>
+                                        <TableCell>{seasonLog.PTS}</TableCell>
+                                        <TableCell>{seasonLog.TRB}</TableCell>
+                                        <TableCell>{seasonLog.AST}</TableCell>
+                                        <TableCell>{seasonLog.STL}</TableCell>
+                                        <TableCell>{seasonLog.BLK}</TableCell>
+                                        <TableCell>{seasonLog.TOV}</TableCell>
+                                        <TableCell>{seasonLog.PF}</TableCell>
+                                        <TableCell>{seasonLog['FG%']}</TableCell>
+                                        <TableCell>{seasonLog['3P%']}</TableCell>
+                                        <TableCell>{seasonLog.FTP}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                ) : <Typography>No season stats available for the selected year.</Typography>;
             })()}
 
-            {/* === Game Logs Section === */}
-            <h2 style={{ marginTop: '2rem' }}>{player.name} – Game Logs</h2>
-
-            {/* Sort stat dropdown */}
-            <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="statSort"><strong>Sort By Stat:</strong>{' '}</label>
-                <select
-                    id="statSort"
+            {/* Game Logs */}
+            <Typography variant="h4" gutterBottom>{player.name} – Game Logs</Typography>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Sort By Stat</InputLabel>
+                <Select
                     value={sortByStat || ''}
+                    label="Sort By Stat"
                     onChange={(e) => setSortByStat(e.target.value || null)}
                 >
-                    <option value="">-- None --</option>
-                    <option value="pts">Points</option>
-                    <option value="reb">Rebounds</option>
-                    <option value="ast">Assists</option>
-                    <option value="stl">Steals</option>
-                    <option value="blk">Blocks</option>
-                    <option value="tov">Turnovers</option>
-                    <option value="plusMinus">Plus/Minus</option>
-                    <option value="fgm">FG Made</option>
-                    <option value="fga">FG Attempted</option>
-                    <option value="tpm">3P Made</option>
-                    <option value="tpa">3P Attempted</option>
-                    <option value="ftm">FT Made</option>
-                    <option value="fta">FT Attempted</option>
-                    <option value="pf">Fouls</option>
-                    <option value="timePlayed">Minutes Played</option>
-                </select>
-            </div>
+                    <MenuItem value="">-- None --</MenuItem>
+                    <MenuItem value="pts">Points</MenuItem>
+                    <MenuItem value="reb">Rebounds</MenuItem>
+                    <MenuItem value="ast">Assists</MenuItem>
+                    <MenuItem value="stl">Steals</MenuItem>
+                    <MenuItem value="blk">Blocks</MenuItem>
+                    <MenuItem value="tov">Turnovers</MenuItem>
+                    <MenuItem value="plusMinus">Plus/Minus</MenuItem>
+                    <MenuItem value="fgm">FG Made</MenuItem>
+                    <MenuItem value="fga">FG Attempted</MenuItem>
+                    <MenuItem value="tpm">3P Made</MenuItem>
+                    <MenuItem value="tpa">3P Attempted</MenuItem>
+                    <MenuItem value="ftm">FT Made</MenuItem>
+                    <MenuItem value="fta">FT Attempted</MenuItem>
+                    <MenuItem value="pf">Fouls</MenuItem>
+                    <MenuItem value="timePlayed">Minutes Played</MenuItem>
+                </Select>
+            </FormControl>
 
-            {/* Display game log table or fallback message */}
             {displayedLogs.length === 0 ? (
-                <p>No game logs available for the selected season.</p>
+                <Typography>No game logs available for the selected season.</Typography>
             ) : (
-                <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%' }}>
-                    <thead>
-                    <tr>
-                        <th>Date</th><th>Opponent</th><th>PTS</th><th>REB</th><th>AST</th>
-                        <th>STL</th><th>BLK</th><th>TOV</th><th>+/-</th><th>FGM-FGA</th>
-                        <th>3PM-3PA</th><th>FTM-FTA</th><th>Fouls</th><th>Minutes</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {displayedLogs.map((game, index) => (
-                        <tr key={index}>
-                            <td>{game.date.split(' ')[0]}</td>
-                            <td>{game.opponent}</td>
-                            <td>{game.pts}</td>
-                            <td>{game.reb}</td>
-                            <td>{game.ast}</td>
-                            <td>{game.stl}</td>
-                            <td>{game.blk}</td>
-                            <td>{game.tov}</td>
-                            <td>{game.plusMinus ?? '—'}</td>
-                            <td>{game.fgm}-{game.fga}</td>
-                            <td>{game.tpm ?? game['3PM']}-{game.tpa ?? game['3PA']}</td>
-                            <td>{game.ftm}-{game.fta}</td>
-                            <td>{game.pf}</td>
-                            <td>{game.timePlayed}</td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
+                <TableContainer component={Paper} sx={{ mb: 6 }}$1>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Date</TableCell><TableCell>Opponent</TableCell><TableCell>PTS</TableCell><TableCell>REB</TableCell><TableCell>AST</TableCell>
+                                <TableCell>STL</TableCell><TableCell>BLK</TableCell><TableCell>TOV</TableCell><TableCell>+/-</TableCell>
+                                <TableCell>FGM-FGA</TableCell><TableCell>3PM-3PA</TableCell><TableCell>FTM-FTA</TableCell><TableCell>Fouls</TableCell><TableCell>Minutes</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {displayedLogs.map((game, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>{game.date.split(' ')[0]}</TableCell>
+                                    <TableCell>{game.opponent}</TableCell>
+                                    <TableCell>{game.pts}</TableCell>
+                                    <TableCell>{game.reb}</TableCell>
+                                    <TableCell>{game.ast}</TableCell>
+                                    <TableCell>{game.stl}</TableCell>
+                                    <TableCell>{game.blk}</TableCell>
+                                    <TableCell>{game.tov}</TableCell>
+                                    <TableCell>{game.plusMinus ?? '—'}</TableCell>
+                                    <TableCell>{game.fgm}-{game.fga}</TableCell>
+                                    <TableCell>{game.tpm ?? game['3PM']}-{game.tpa ?? game['3PA']}</TableCell>
+                                    <TableCell>{game.ftm}-{game.fta}</TableCell>
+                                    <TableCell>{game.pf}</TableCell>
+                                    <TableCell>{game.timePlayed}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
             )}
-        </div>
+        </Container>
     );
 };
 

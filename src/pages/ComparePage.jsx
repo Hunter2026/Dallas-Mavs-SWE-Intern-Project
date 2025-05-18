@@ -1,132 +1,126 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import CompareChart from '../components/CompareChart';
+import {
+    Container,
+    Paper,
+    Typography,
+    Grid,
+    Box,
+    List,
+    ListItem,
+    ListItemText,
+    Divider,
+    Alert,
+    Button
+} from '@mui/material';
 
-// ComparePage displays side-by-side comparisons of up to three players
 const ComparePage = () => {
-    const location = useLocation(); // Access the current location object
-    const query = new URLSearchParams(location.search); // Parse URL query parameters
-
-    // Extract player IDs from the query string, limiting to 3 players
+    const location = useLocation();
+    const query = new URLSearchParams(location.search);
     const ids = query.get('ids')?.split(',').slice(0, 3) || [];
 
-    // State to hold relevant data for comparison
-    const [players, setPlayers] = useState([]);          // Basic bio info
-    const [measurements, setMeasurements] = useState([]); // Combine data from Combine/Pro Day
-    const [seasonLogs, setSeasonLogs] = useState([]);     // Seasonal performance data
+    const [players, setPlayers] = useState([]);
+    const [measurements, setMeasurements] = useState([]);
+    const [seasonLogs, setSeasonLogs] = useState([]);
 
-    // Fetch relevant data when the selected IDs change
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
-                // Filter the data for the selected player IDs
                 const selectedPlayers = data.bio.filter(p => ids.includes(p.playerId.toString()));
                 const selectedMeasurements = data.measurements?.filter(m => ids.includes(m.playerId?.toString())) || [];
                 const selectedSeasonLogs = data.seasonLogs?.filter(l => ids.includes(l.playerId?.toString())) || [];
-
-                // Store in local state
                 setPlayers(selectedPlayers);
                 setMeasurements(selectedMeasurements);
                 setSeasonLogs(selectedSeasonLogs);
             });
     }, [ids]);
 
-    // Utility function to retrieve a specific measurement for a player
     const getMeasurements = (playerId, key) => {
         const m = measurements.find(m => m.playerId?.toString() === playerId.toString());
         const val = m?.[key];
         return val !== undefined && val !== null ? val : 'N/A';
     };
 
-    // Utility function to compute a player's career average for a given stat
     const getCareerAvg = (playerId, statKey) => {
         const logs = seasonLogs.filter(l => l.playerId?.toString() === playerId.toString());
-        const totalGP = logs.reduce((sum, l) => sum + l.GP, 0); // GP = Games Played
-        if (totalGP === 0) return '—'; // Avoid divide-by-zero
-        const total = logs.reduce((sum, l) => sum + (l[statKey] ?? 0) * l.GP, 0); // Weighted average
+        const totalGP = logs.reduce((sum, l) => sum + l.GP, 0);
+        if (totalGP === 0) return '—';
+        const total = logs.reduce((sum, l) => sum + (l[statKey] ?? 0) * l.GP, 0);
         return (total / totalGP).toFixed(1);
     };
 
-    // Require at least 2 players for meaningful comparison
     if (!players || players.length < 2) {
         return (
-            <div style={{ padding: '2rem' }}>
-                <h2>Player Comparison</h2>
-                <p>Please select at least <strong>two players</strong> to compare.</p>
-                <p>Return to the <Link to="/">Big Board</Link> and add more players to your comparison cart.</p>
-            </div>
+            <Container sx={{ py: 4 }}>
+                <Typography variant="h5" gutterBottom>Player Comparison</Typography>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    Please select at least <strong>two players</strong> to compare.
+                </Alert>
+                <Button component={Link} to="/" variant="contained">Return to Big Board</Button>
+            </Container>
         );
     }
 
     return (
-        <div style={{ padding: '1rem' }}>
-            {/* Navigation back to main draft board */}
-            <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>
-                ← Back to Big Board
-            </Link>
+        <Container sx={{ py: 4 }}>
+            {/* Header and back navigation */}
+            <Box mb={3}>
+                <Button component={Link} to="/" variant="outlined">← Back to Big Board</Button>
+            </Box>
 
-            <h2>Player Comparison</h2>
+            <Typography variant="h4" gutterBottom>Player Comparison</Typography>
 
-            {/* Comparison grid layout */}
-            {players.length === 0 ? (
-                <p>No players selected.</p>
-            ) : (
-                <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                    {players.map(player => (
-                        <div
-                            key={player.playerId}
-                            style={{
-                                border: '1px solid #ccc',
-                                padding: '1rem',
-                                flex: 1,
-                                minWidth: '300px'
-                            }}
-                        >
-                            {/* Player basic info */}
-                            <h3>{player.name}</h3>
-                            <p><strong>Team:</strong> {player.currentTeam}</p>
-                            <p><strong>League:</strong> {player.league}</p>
+            {/* Comparison cards for each player */}
+            <Grid container spacing={4} justifyContent="center" mb={4}>
+                {players.map(player => (
+                    <Grid item xs={12} sm={6} md={4} key={player.playerId}>
+                        <Paper elevation={3} sx={{ p: 3, minWidth: '280px', maxWidth: '380px', mx: 'auto' }}>
+                            <Typography variant="h6">{player.name}</Typography>
+                            <Typography variant="body2" gutterBottom><strong>Team:</strong> {player.currentTeam}</Typography>
+                            <Typography variant="body2" gutterBottom><strong>League:</strong> {player.league}</Typography>
 
                             {/* Measurement section */}
-                            <h4>Measurements</h4>
-                            <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
-                                <li><strong>Height (No Shoes):</strong> {getMeasurements(player.playerId, 'heightNoShoes')}"</li>
-                                <li><strong>Height (With Shoes):</strong> {getMeasurements(player.playerId, 'heightShoes')}"</li>
-                                <li><strong>Wingspan:</strong> {getMeasurements(player.playerId, 'wingspan')}"</li>
-                                <li><strong>Standing Reach:</strong> {getMeasurements(player.playerId, 'reach')}"</li>
-                                <li><strong>Weight:</strong> {getMeasurements(player.playerId, 'weight')} lbs</li>
-                                <li><strong>Max Vertical:</strong> {getMeasurements(player.playerId, 'maxVertical')}"</li>
-                                <li><strong>No-Step Vertical:</strong> {getMeasurements(player.playerId, 'noStepVertical')}"</li>
-                                <li><strong>Hand Length:</strong> {getMeasurements(player.playerId, 'handLength')}"</li>
-                                <li><strong>Hand Width:</strong> {getMeasurements(player.playerId, 'handWidth')}"</li>
-                                <li><strong>Agility:</strong> {getMeasurements(player.playerId, 'agility')} sec</li>
-                                <li><strong>Sprint:</strong> {getMeasurements(player.playerId, 'sprint')} sec</li>
-                                <li><strong>Shuttle Best:</strong> {getMeasurements(player.playerId, 'shuttleBest')} sec</li>
-                                <li><strong>Body Fat %:</strong> {getMeasurements(player.playerId, 'bodyFat')}</li>
-                            </ul>
+                            <Typography variant="subtitle1" sx={{ mt: 2 }}><strong>Measurements</strong></Typography>
+                            <List dense>
+                                <ListItem><ListItemText primary={<strong>Height (No Shoes):</strong>} secondary={`${getMeasurements(player.playerId, 'heightNoShoes')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Height (With Shoes):</strong>} secondary={`${getMeasurements(player.playerId, 'heightShoes')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Wingspan:</strong>} secondary={`${getMeasurements(player.playerId, 'wingspan')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Standing Reach:</strong>} secondary={`${getMeasurements(player.playerId, 'reach')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Weight:</strong>} secondary={`${getMeasurements(player.playerId, 'weight')} lbs`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Max Vertical:</strong>} secondary={`${getMeasurements(player.playerId, 'maxVertical')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>No-Step Vertical:</strong>} secondary={`${getMeasurements(player.playerId, 'noStepVertical')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Hand Length:</strong>} secondary={`${getMeasurements(player.playerId, 'handLength')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Hand Width:</strong>} secondary={`${getMeasurements(player.playerId, 'handWidth')}"`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Agility:</strong>} secondary={`${getMeasurements(player.playerId, 'agility')} sec`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Sprint:</strong>} secondary={`${getMeasurements(player.playerId, 'sprint')} sec`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Shuttle Best:</strong>} secondary={`${getMeasurements(player.playerId, 'shuttleBest')} sec`} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>Body Fat %:</strong>} secondary={getMeasurements(player.playerId, 'bodyFat')} /></ListItem>
+                            </List>
 
                             {/* Career averages section */}
-                            <h4>Career Averages</h4>
-                            <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
-                                <li><strong>PTS:</strong> {getCareerAvg(player.playerId, 'PTS')}</li>
-                                <li><strong>TRB:</strong> {getCareerAvg(player.playerId, 'TRB')}</li>
-                                <li><strong>AST:</strong> {getCareerAvg(player.playerId, 'AST')}</li>
-                                <li><strong>STL:</strong> {getCareerAvg(player.playerId, 'STL')}</li>
-                                <li><strong>BLK:</strong> {getCareerAvg(player.playerId, 'BLK')}</li>
-                                <li><strong>TOV:</strong> {getCareerAvg(player.playerId, 'TOV')}</li>
-                                <li><strong>FG%:</strong> {getCareerAvg(player.playerId, 'FG%')}</li>
-                                <li><strong>3P%:</strong> {getCareerAvg(player.playerId, '3P%')}</li>
-                                <li><strong>FT%:</strong> {getCareerAvg(player.playerId, 'FTP')}</li>
-                            </ul>
-                        </div>
-                    ))}
-                </div>
-            )}
+                            <Divider sx={{ my: 2 }} />
+                            <Typography variant="subtitle1"><strong>Career Averages</strong></Typography>
+                            <List dense>
+                                <ListItem><ListItemText primary={<strong>PTS:</strong>} secondary={getCareerAvg(player.playerId, 'PTS')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>TRB:</strong>} secondary={getCareerAvg(player.playerId, 'TRB')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>AST:</strong>} secondary={getCareerAvg(player.playerId, 'AST')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>STL:</strong>} secondary={getCareerAvg(player.playerId, 'STL')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>BLK:</strong>} secondary={getCareerAvg(player.playerId, 'BLK')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>TOV:</strong>} secondary={getCareerAvg(player.playerId, 'TOV')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>FG%:</strong>} secondary={getCareerAvg(player.playerId, 'FG%')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>3P%:</strong>} secondary={getCareerAvg(player.playerId, '3P%')} /></ListItem>
+                                <ListItem><ListItemText primary={<strong>FT%:</strong>} secondary={getCareerAvg(player.playerId, 'FTP')} /></ListItem>
+                            </List>
+                        </Paper>
+                    </Grid>
+                ))}
+            </Grid>
 
-            {/* Chart visualizing comparison between players */}
+            {/* Chart showing comparative data */}
             <CompareChart players={players} seasonLogs={seasonLogs} measurements={measurements} />
-        </div>
+        </Container>
     );
 };
 

@@ -1,14 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SummaryGenerator from '../components/SummaryGenerator';
+import {
+    Container,
+    Typography,
+    Box,
+    Paper,
+    List,
+    ListItem,
+    ListItemText,
+    Button
+} from '@mui/material';
 
-// Component to view all scouting reports submitted for a specific player
 const SubmittedScoutReportPage = () => {
-    const { id } = useParams(); // Get player ID from URL
-    const [reports, setReports] = useState([]); // List of scouting reports
-    const [player, setPlayer] = useState(null); // Player bio information
+    const { id } = useParams();
+    const [reports, setReports] = useState([]);
+    const [player, setPlayer] = useState(null);
 
-    // Load all submitted reports for this player from localStorage
+    // Load saved reports from localStorage
     useEffect(() => {
         const saved = localStorage.getItem(`report_player_${id}`);
         if (saved) {
@@ -28,7 +37,7 @@ const SubmittedScoutReportPage = () => {
         }
     }, [id]);
 
-    // Fetch player bio information from static JSON
+    // Fetch player bio info
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
@@ -39,82 +48,97 @@ const SubmittedScoutReportPage = () => {
     }, [id]);
 
     return (
-        <div style={{ padding: '1rem' }}>
-            {/* Back navigation link to the player profile page */}
-            <Link to={`/player/${id}`}>← Back to Player Profile</Link>
+        <Container maxWidth="md" sx={{ py: 4 }}>
+            {/* NBA Scout Report Profile in Top Right */}
+            <Box sx={{ position: 'absolute', top: 16, right: 100 }}>
+                <img
+                    src="/Scouting Report Profile.png"
+                    alt="Scouting Report Profile Logo"
+                    style={{ width: 350, height: 'auto' }}
+                />
+            </Box>
 
-            {/* Page title */}
-            <h2>{player ? `${player.name} – Scouting Reports` : 'Scouting Reports'}</h2>
+            {/* Back link */}
+            <Box mb={2}>
+                <Button component={Link} to={`/player/${id}`} variant="outlined">
+                    ← Back to Player Profile
+                </Button>
+            </Box>
 
-            {/* Show message if no reports exist */}
+            {/* Title */}
+            <Typography variant="h4" gutterBottom>
+                {player ? `${player.name} – Scouting Reports` : 'Scouting Reports'}
+            </Typography>
+
+            {/* No reports */}
             {reports.length === 0 ? (
-                <p>No scouting reports submitted yet for this player.</p>
+                <Typography>No scouting reports submitted yet for this player.</Typography>
             ) : (
                 <>
-                    {/* Display the latest submitted report (most recent first) */}
-                    <h3>Latest Report</h3>
-                    <p><strong>Submitted:</strong> {reports[0].createdAt}</p>
-                    <p><strong>Strengths:</strong> {reports[0].strengths}</p>
-                    <p><strong>Weaknesses:</strong> {reports[0].weaknesses}</p>
-                    <p><strong>Player Comparison:</strong> {reports[0].comparison}</p>
-                    <p><strong>Best NBA Fit:</strong> {reports[0].fit}</p>
-                    <p><strong>Projected Role:</strong> {reports[0].role}</p>
-                    <p><strong>Projected Ceiling:</strong> {reports[0].ceiling}</p>
-                    <p><strong>Draft Range:</strong> {reports[0].range}</p>
+                    {/* Most recent report */}
+                    <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+                        <Typography variant="h6">Latest Report</Typography>
+                        <Typography variant="body2" gutterBottom><strong>Submitted:</strong> {reports[0].createdAt}</Typography>
+                        <Typography><strong>Strengths:</strong> {reports[0].strengths}</Typography>
+                        <Typography><strong>Weaknesses:</strong> {reports[0].weaknesses}</Typography>
+                        <Typography><strong>Player Comparison:</strong> {reports[0].comparison}</Typography>
+                        <Typography><strong>Best NBA Fit:</strong> {reports[0].fit}</Typography>
+                        <Typography><strong>Projected Role:</strong> {reports[0].role}</Typography>
+                        <Typography><strong>Projected Ceiling:</strong> {reports[0].ceiling}</Typography>
+                        <Typography><strong>Draft Range:</strong> {reports[0].range}</Typography>
 
-                    {/* Display individual trait ratings */}
-                    <h5>Trait Ratings:</h5>
-                    <ul>
-                        {Object.entries(reports[0].ratings).map(([trait, value]) => (
-                            <li key={trait}><strong>{trait}:</strong> {value}</li>
-                        ))}
-                    </ul>
+                        {/* Trait ratings */}
+                        <Box mt={2}>
+                            <Typography variant="subtitle1">Trait Ratings:</Typography>
+                            <List dense>
+                                {Object.entries(reports[0].ratings).map(([trait, value]) => (
+                                    <ListItem key={trait} disablePadding>
+                                        <ListItemText primary={`${trait}: ${value}`} />
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
 
-                    {/* Generate a summary based on the report data */}
-                    <SummaryGenerator report={reports[0]} />
+                        {/* Summary output */}
+                        <SummaryGenerator report={reports[0]} />
+                    </Paper>
 
-                    {/* Show previous reports if more than one exists */}
+                    {/* Previous reports */}
                     {reports.length > 1 && (
                         <>
-                            <h3 style={{ marginTop: '3rem' }}>Previous Reports</h3>
+                            <Typography variant="h5" gutterBottom>Previous Reports</Typography>
                             {reports.slice(1).map((rep, index) => (
-                                <div
-                                    key={index}
-                                    style={{
-                                        marginBottom: '2rem',
-                                        padding: '1rem',
-                                        background: '#f4f4f4',
-                                        border: '1px solid #ccc',
-                                        borderRadius: '6px',
-                                    }}
-                                >
-                                    {/* Metadata and report details */}
-                                    <h4>Submitted: {rep.createdAt}</h4>
-                                    <p><strong>Strengths:</strong> {rep.strengths}</p>
-                                    <p><strong>Weaknesses:</strong> {rep.weaknesses}</p>
-                                    <p><strong>Player Comparison:</strong> {rep.comparison}</p>
-                                    <p><strong>Best Fit:</strong> {rep.fit}</p>
-                                    <p><strong>Projected Role:</strong> {rep.role}</p>
-                                    <p><strong>Projected Ceiling:</strong> {rep.ceiling}</p>
-                                    <p><strong>Draft Range:</strong> {rep.range}</p>
+                                <Paper key={index} elevation={1} sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5' }}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Submitted: {rep.createdAt}
+                                    </Typography>
+                                    <Typography><strong>Strengths:</strong> {rep.strengths}</Typography>
+                                    <Typography><strong>Weaknesses:</strong> {rep.weaknesses}</Typography>
+                                    <Typography><strong>Player Comparison:</strong> {rep.comparison}</Typography>
+                                    <Typography><strong>Best Fit:</strong> {rep.fit}</Typography>
+                                    <Typography><strong>Projected Role:</strong> {rep.role}</Typography>
+                                    <Typography><strong>Projected Ceiling:</strong> {rep.ceiling}</Typography>
+                                    <Typography><strong>Draft Range:</strong> {rep.range}</Typography>
 
-                                    {/* Trait ratings list */}
-                                    <h5>Trait Ratings:</h5>
-                                    <ul>
-                                        {Object.entries(rep.ratings).map(([trait, value]) => (
-                                            <li key={trait}><strong>{trait}:</strong> {value}</li>
-                                        ))}
-                                    </ul>
+                                    <Box mt={2}>
+                                        <Typography variant="subtitle1">Trait Ratings:</Typography>
+                                        <List dense>
+                                            {Object.entries(rep.ratings).map(([trait, value]) => (
+                                                <ListItem key={trait} disablePadding>
+                                                    <ListItemText primary={`${trait}: ${value}`} />
+                                                </ListItem>
+                                            ))}
+                                        </List>
+                                    </Box>
 
-                                    {/* Summary for each past report */}
                                     <SummaryGenerator report={rep} />
-                                </div>
+                                </Paper>
                             ))}
                         </>
                     )}
                 </>
             )}
-        </div>
+        </Container>
     );
 };
 

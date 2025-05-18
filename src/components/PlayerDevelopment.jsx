@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { Paper, Typography, Box, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
 
 // Define all stats that can be tracked over time
 const allStats = ['MP', 'PTS', 'AST', 'TRB', 'STL', 'BLK'];
@@ -16,132 +17,101 @@ const statColors = {
     BLK: '#673ab7',
 };
 
-// Main component to visualize player stat development over seasons
 const PlayerDevelopment = ({ seasonLogs, player }) => {
-    const [selectedStats, setSelectedStats] = useState(allStats); // Track which stats the user wants to view
+    const [selectedStats, setSelectedStats] = useState(allStats); // Stats to display
+    const birthYear = player?.birthDate ? new Date(player.birthDate).getFullYear() : null;
 
-    // Extract birth year to calculate player's age each season
-    const birthYear = player?.birthDate
-        ? new Date(player.birthDate).getFullYear()
-        : null;
-
-    // Aggregate all stats and team info per season
+    // Aggregate season stats
     const seasonMap = {};
     seasonLogs.forEach(log => {
         const season = log.Season;
-
-        // Initialize season entry if it doesn't exist
         if (!seasonMap[season]) {
-            seasonMap[season] = {
-                season,
-                teams: new Set(),
-                count: 0 // Track how many logs per season to calculate averages
-            };
-            // Initialize stat totals
-            allStats.forEach(stat => seasonMap[season][stat] = 0);
+            seasonMap[season] = { season, teams: new Set(), count: 0 };
+            allStats.forEach(stat => (seasonMap[season][stat] = 0));
         }
-
-        // Sum each stat if valid
         allStats.forEach(stat => {
             seasonMap[season][stat] += typeof log[stat] === 'number' ? log[stat] : 0;
         });
-
-        // Track team(s) played for and increment entry count
         seasonMap[season].teams.add(log.Team);
         seasonMap[season].count += 1;
     });
 
-    // Convert aggregated map into chart-ready data
+    // Format chart data
     const chartData = Object.values(seasonMap)
         .map(season => {
-            const row = {
-                season: season.season,
-                teams: [...season.teams].join(', ') // Display multiple teams if necessary
-            };
-
-            // Calculate average for each stat
+            const row = { season: season.season, teams: [...season.teams].join(', ') };
             allStats.forEach(stat => {
                 row[stat] = +(season[stat] / season.count).toFixed(1);
             });
-
-            // Append age if birth year is available
-            if (birthYear) {
-                row.age = season.season - birthYear;
-            }
-
+            if (birthYear) row.age = season.season - birthYear;
             return row;
         })
-        .sort((a, b) => a.season - b.season); // Sort chronologically
+        .sort((a, b) => a.season - b.season);
 
-    // Custom tooltip to show team(s), age, and stat values on hover
+    // Tooltip component
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             const row = payload[0].payload;
             return (
-                <div style={{ background: 'white', padding: 10, border: '1px solid #ccc' }}>
-                    <strong>Season: {label}</strong><br />
-                    <em>Teams:</em> {row.teams}<br />
-                    {row.age !== undefined && <div><em>Age:</em> {row.age}</div>}
+                <Box sx={{ backgroundColor: 'white', border: '1px solid #ccc', p: 1 }}>
+                    <Typography variant="subtitle2"><strong>Season:</strong> {label}</Typography>
+                    <Typography variant="body2"><em>Teams:</em> {row.teams}</Typography>
+                    {row.age !== undefined && (
+                        <Typography variant="body2"><em>Age:</em> {row.age}</Typography>
+                    )}
                     {payload.map((p, i) => (
-                        <div key={i}>{p.name}: {p.value}</div>
+                        <Typography variant="body2" key={i}>{p.name}: {p.value}</Typography>
                     ))}
-                </div>
+                </Box>
             );
         }
         return null;
     };
 
-    // Toggle individual stat on/off for the chart
     const toggleStat = (stat) => {
-        setSelectedStats(prev =>
-            prev.includes(stat)
-                ? prev.filter(s => s !== stat)
-                : [...prev, stat]
-        );
+        setSelectedStats(prev => prev.includes(stat) ? prev.filter(s => s !== stat) : [...prev, stat]);
     };
 
-    // Toggle all stats on or off
     const toggleAll = () => {
-        setSelectedStats(prev =>
-            prev.length === allStats.length ? [] : allStats
-        );
+        setSelectedStats(prev => (prev.length === allStats.length ? [] : allStats));
     };
 
-    // Handle case where no data is available
     if (chartData.length === 0) {
-        return <p style={{ color: 'red' }}>No data available to render chart.</p>;
+        return <Typography color="error">No data available to render chart.</Typography>;
     }
 
     return (
-        <div style={{ width: '100%', margin: '3rem 0' }}>
-            <h2 style={{ marginBottom: '1rem' }}>Player Development Over Time</h2>
+        <Paper elevation={3} sx={{ p: 3, my: 4 }}>
+            {/* Title */}
+            <Typography variant="h6" gutterBottom>Player Development Over Time</Typography>
 
-            {/* === Stat Filter Controls === */}
-            <div style={{ marginBottom: '1rem' }}>
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={selectedStats.length === allStats.length}
-                        onChange={toggleAll}
-                    />{' '}
-                    <strong>Select All</strong>
-                </label>
-                <div style={{ marginTop: '0.5rem' }}>
-                    {allStats.map(stat => (
-                        <label key={stat} style={{ marginRight: '1rem' }}>
-                            <input
-                                type="checkbox"
+            {/* Stat toggles */}
+            <FormGroup row sx={{ mb: 2 }}>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={selectedStats.length === allStats.length}
+                            onChange={toggleAll}
+                        />
+                    }
+                    label="Select All"
+                />
+                {allStats.map(stat => (
+                    <FormControlLabel
+                        key={stat}
+                        control={
+                            <Checkbox
                                 checked={selectedStats.includes(stat)}
                                 onChange={() => toggleStat(stat)}
-                            />{' '}
-                            {stat}
-                        </label>
-                    ))}
-                </div>
-            </div>
+                            />
+                        }
+                        label={stat}
+                    />
+                ))}
+            </FormGroup>
 
-            {/* === Stat Development Line Chart === */}
-            <div style={{ width: '100%', height: '400px', minHeight: '400px' }}>
+            {/* Chart */}
+            <Box height={400}>
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -161,8 +131,8 @@ const PlayerDevelopment = ({ seasonLogs, player }) => {
                         ))}
                     </LineChart>
                 </ResponsiveContainer>
-            </div>
-        </div>
+            </Box>
+        </Paper>
     );
 };
 

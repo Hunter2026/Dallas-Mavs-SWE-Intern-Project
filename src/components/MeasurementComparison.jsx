@@ -1,33 +1,35 @@
 import React from 'react';
+import { Paper, Typography, List, ListItem, ListItemText } from '@mui/material';
 
-// Measurement stats to compare, including labels
+// Define measurement fields with labels and units
 const statFields = [
-    { key: 'heightNoShoes', label: 'Height (No Shoes)' },
-    { key: 'heightShoes', label: 'Height (With Shoes)' },
-    { key: 'wingspan', label: 'Wingspan' },
-    { key: 'reach', label: 'Standing Reach' },
-    { key: 'weight', label: 'Weight' },
-    { key: 'maxVertical', label: 'Max Vertical' },
-    { key: 'noStepVertical', label: 'No-Step Vertical' },
-    { key: 'handLength', label: 'Hand Length' },
-    { key: 'handWidth', label: 'Hand Width' },
-    { key: 'agility', label: 'Agility' },
-    { key: 'sprint', label: 'Sprint' },
-    { key: 'shuttleBest', label: 'Shuttle Best' },
-    { key: 'bodyFat', label: 'Body Fat %' },
+    { key: 'heightNoShoes', label: 'Height (No Shoes)', unit: '"' },
+    { key: 'heightShoes', label: 'Height (With Shoes)', unit: '"' },
+    { key: 'wingspan', label: 'Wingspan', unit: '"' },
+    { key: 'reach', label: 'Standing Reach', unit: '"' },
+    { key: 'weight', label: 'Weight', unit: ' lbs' },
+    { key: 'maxVertical', label: 'Max Vertical', unit: '"' },
+    { key: 'noStepVertical', label: 'No-Step Vertical', unit: '"' },
+    { key: 'handLength', label: 'Hand Length', unit: '"' },
+    { key: 'handWidth', label: 'Hand Width', unit: '"' },
+    { key: 'agility', label: 'Agility', unit: ' sec' },
+    { key: 'sprint', label: 'Sprint', unit: ' sec' },
+    { key: 'shuttleBest', label: 'Shuttle Best', unit: ' sec' },
+    { key: 'bodyFat', label: 'Body Fat %', unit: '%' },
 ];
 
 const MeasurementComparison = ({ player, measurements }) => {
+    // Guard clause: if no player or data
     if (!player || !Array.isArray(measurements) || measurements.length === 0) return null;
 
-    // Find current player's measurement entry
+    // Find the current player's measurements
     const current = measurements.find(m => m.playerId === player.playerId);
-    if (!current) return <p>No measurements to compare.</p>;
+    if (!current) return <Typography>No measurements to compare.</Typography>;
 
-    // Use all other players as peer group
+    // Get peer group (everyone except current player)
     const peers = measurements.filter(m => m.playerId !== player.playerId);
 
-    // Compute averages for each stat
+    // Compute average values for each measurement field
     const averages = {};
     statFields.forEach(({ key }) => {
         const values = peers.map(p => p[key]).filter(v => typeof v === 'number' && !isNaN(v));
@@ -35,7 +37,7 @@ const MeasurementComparison = ({ player, measurements }) => {
         averages[key] = avg;
     });
 
-    // Comparison label logic
+    // Compare value to average and return label
     const getLabel = (value, avg, reverse = false) => {
         if (value == null || isNaN(value) || avg == null) return 'N/A';
         const diff = value - avg;
@@ -52,27 +54,32 @@ const MeasurementComparison = ({ player, measurements }) => {
         }
     };
 
+    // Render styled measurement list with labels
     return (
-        <div style={{ marginTop: '2rem', background: '#eef4ff', padding: '1rem', borderRadius: '6px' }}>
-            <h3>Measurement Comparison to Peers</h3>
-            <ul>
-                {statFields.map(({ key, label }) => {
+        <Paper elevation={2} sx={{ mt: 4, p: 2, backgroundColor: '#eef4ff', borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom><strong>Measurement Comparison to Peers</strong></Typography>
+            <List dense>
+                {statFields.map(({ key, label, unit }) => {
                     const val = current[key];
                     const avg = averages[key];
-                    const isReverse = key === 'sprint' || key === 'agility'; // lower = better
+                    const isReverse = key === 'sprint' || key === 'agility'; // lower = better for these
 
-                    const formattedVal = val != null && !isNaN(val) ? val : 'N/A';
-                    const formattedAvg = avg != null && !isNaN(avg) ? avg.toFixed(1) : 'N/A';
+                    // Format values with unit or fallback to N/A
+                    const formattedVal = val != null && !isNaN(val) ? `${val}${unit}` : 'N/A';
+                    const formattedAvg = avg != null && !isNaN(avg) ? `${avg.toFixed(1)}${unit}` : 'N/A';
+
                     const labelText = getLabel(val, avg, isReverse);
 
                     return (
-                        <li key={key}>
-                            <strong>{label}:</strong> {formattedVal} ({labelText}, Avg: {formattedAvg})
-                        </li>
+                        <ListItem key={key} disablePadding>
+                            <ListItemText
+                                primary={<span><strong>{label}:</strong> {formattedVal} ({labelText}, Avg: {formattedAvg})</span>}
+                            />
+                        </ListItem>
                     );
                 })}
-            </ul>
-        </div>
+            </List>
+        </Paper>
     );
 };
 

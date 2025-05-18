@@ -1,26 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import {
+    Container,
+    Typography,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Grid,
+    Avatar,
+    Divider,
+} from '@mui/material';
 
-// Component for displaying a full player profile page, including bio and scouting report links
 const PlayerPage = () => {
-    const { id } = useParams(); // Extract player ID from the route (URL parameter)
-    const [player, setPlayer] = useState(null); // Stores the combined player bio and scout ranking data
-    const [scoutingReports, setScoutingReports] = useState([]); // Stores text-based scouting reports (not used directly here)
+    const { id } = useParams();
+    const [player, setPlayer] = useState(null);
 
-    // Fetch player bio and scout ranking data on initial render or when `id` changes
+    // Fetch player data on load
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
-                // Find matching bio and scout ranking by playerId
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
                 const rankings = data.scoutRankings.find(r => r.playerId.toString() === id);
-                // Combine bio and rankings into one player object
                 setPlayer({ ...foundPlayer, scoutRankings: rankings });
             });
     }, [id]);
 
-    // Helper function to calculate age from birthdate
+    // Calculate age from birthdate
     const calculateAge = (birthDateString) => {
         const birthDate = new Date(birthDateString);
         const today = new Date();
@@ -30,66 +37,111 @@ const PlayerPage = () => {
             today.getMonth() > birthDate.getMonth() ||
             (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
 
-        if (!hasHadBirthdayThisYear) {
-            age -= 1;
-        }
-
+        if (!hasHadBirthdayThisYear) age -= 1;
         return age;
     };
 
-    // Display loading text while player data is being fetched
-    if (!player) return <p>Loading...</p>;
+    if (!player) return <Typography>Loading...</Typography>;
 
     return (
-        <div style={{ padding: '1rem' }}>
-            {/* Navigation link back to the big board */}
-            <Link to="/" style={{ display: 'inline-block', marginBottom: '1rem' }}>
-                ← Back to Big Board
-            </Link>
+        <Container maxWidth="md" sx={{ py: 4 }}>
+            {/* NBA Draft Logo in Top Right */}
+            <Box sx={{ position: 'absolute', top: 100, right: 100 }}>
+                <img
+                    src="/NBA Draft.png"
+                    alt="NBA Draft Logo"
+                    style={{ width: 300, height: 'auto' }}
+                />
+            </Box>
 
-            {/* Display player basic info */}
-            <h2>{player.name}</h2>
-            {player.photoUrl && (
-                <img src={player.photoUrl} alt={player.name} width="150" />
-            )}
-            <p><strong>Current Team:</strong> {player.currentTeam}</p>
-            <p><strong>Age:</strong> {calculateAge(player.birthDate)}</p>
-            <p>
-                <strong>Height:</strong>{' '}
-                {Math.floor(player.height / 12)}&apos; {player.height % 12}&quot;
-            </p>
-            <p><strong>Weight:</strong> {player.weight} lbs</p>
-            <p>
-                <strong>Hometown:</strong> {player.homeTown}, {player.homeState || player.homeCountry}
-            </p>
-            <p><strong>Nationality:</strong> {player.nationality}</p>
+            {/* Back link */}
+            <Box mb={2}>
+                <Button component={Link} to="/" variant="outlined">
+                    ← Back to Big Board
+                </Button>
+            </Box>
 
-            {/* Navigation buttons to other player-specific pages */}
-            <Link to={`/player/${player.playerId}/stats`}>
-                <button style={{ marginTop: '1rem' }}>View Stats & Measurements</button>
-            </Link>
+            {/* Player Info Card */}
+            <Card elevation={3}>
+                <CardContent>
+                    <Grid container spacing={3}>
+                        {/* Avatar and Name */}
+                        <Grid item xs={12} sm={4}>
+                            {player.photoUrl ? (
+                                <Avatar
+                                    src={player.photoUrl}
+                                    alt={player.name}
+                                    sx={{ width: 150, height: 150, mx: 'auto' }}
+                                />
+                            ) : (
+                                <Avatar sx={{ width: 150, height: 150, mx: 'auto' }}>
+                                    {player.name[0]}
+                                </Avatar>
+                            )}
+                            <Typography variant="h5" align="center" mt={2}>
+                                {player.name}
+                            </Typography>
+                        </Grid>
 
-            <Link to={`/player/${player.playerId}/scouting`}>
-                <button style={{ marginTop: '0.5rem' }}>Write Scouting Report</button>
-            </Link>
+                        {/* Bio Info */}
+                        <Grid item xs={12} sm={8}>
+                            <Typography><strong>Current Team:</strong> {player.currentTeam}</Typography>
+                            <Typography><strong>Age:</strong> {calculateAge(player.birthDate)}</Typography>
+                            <Typography>
+                                <strong>Height:</strong> {Math.floor(player.height / 12)}′ {player.height % 12}″
+                            </Typography>
+                            <Typography><strong>Weight:</strong> {player.weight} lbs</Typography>
+                            <Typography>
+                                <strong>Hometown:</strong> {player.homeTown}, {player.homeState || player.homeCountry}
+                            </Typography>
+                            <Typography><strong>Nationality:</strong> {player.nationality}</Typography>
+                        </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
 
-            <Link to={`/player/${player.playerId}/report`}>
-                <button>View Submitted Scouting Reports</button>
-            </Link>
+            {/* Navigation buttons */}
+            <Box mt={3} mb={2} display="flex" gap={2} flexWrap="wrap">
+                <Button
+                    component={Link}
+                    to={`/player/${player.playerId}/stats`}
+                    variant="contained"
+                    color="primary"
+                >
+                    View Stats & Measurements
+                </Button>
+                <Button
+                    component={Link}
+                    to={`/player/${player.playerId}/scouting`}
+                    variant="outlined"
+                >
+                    Write Scouting Report
+                </Button>
+                <Button
+                    component={Link}
+                    to={`/player/${player.playerId}/report`}
+                    variant="outlined"
+                >
+                    View Submitted Reports
+                </Button>
+            </Box>
 
-            {/* Display scout rankings associated with this player */}
-            <h3>Mavericks Scout Rankings</h3>
-            <ul>
+            {/* Scout Rankings */}
+            <Divider sx={{ my: 3 }} />
+            <Typography variant="h6" gutterBottom>Mavericks Scout Rankings</Typography>
+            <Box component="ul" sx={{ pl: 2 }}>
                 {Object.entries(player.scoutRankings || {}).map(([scout, rank]) => {
-                    if (scout === "playerId") return null; // Skip internal ID field
+                    if (scout === "playerId") return null;
                     return (
                         <li key={scout}>
-                            {scout}: {rank ?? 'N/A'} {/* Show N/A if no ranking provided */}
+                            <Typography variant="body2">
+                                {scout}: {rank ?? 'N/A'}
+                            </Typography>
                         </li>
                     );
                 })}
-            </ul>
-        </div>
+            </Box>
+        </Container>
     );
 };
 

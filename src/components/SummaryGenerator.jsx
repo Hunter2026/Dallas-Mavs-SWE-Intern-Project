@@ -1,6 +1,7 @@
 import React from 'react';
+import { Typography, Paper } from '@mui/material';
 
-// Define roles and ceilings in ascending order of development for calculating projection gaps
+// Ordered role and ceiling levels for computing projection gap
 const roles = ['Developmental', 'Bench', 'Role Player', 'Starter'];
 const ceilings = [
     'Fringe Roster',
@@ -12,17 +13,14 @@ const ceilings = [
     'Hall of Famer',
 ];
 
-// Function to extract keywords from free-form text (used in strengths and weaknesses)
+// Keyword extraction for strengths and weaknesses
 const extractKeywords = (text, type) => {
     const keywords = {
         strengths: ['versatile', 'shooter', 'defender', 'motor', 'explosive', 'leader', 'playmaker', 'rebounder'],
         weaknesses: ['inconsistent', 'raw', 'injury', 'turnover', 'slow', 'undersized', 'streaky', 'foul trouble'],
     };
-
     const found = [];
     const lowerText = text.toLowerCase();
-
-    // Check for presence of each keyword
     keywords[type].forEach((word) => {
         if (lowerText.includes(word)) {
             found.push(word);
@@ -31,141 +29,76 @@ const extractKeywords = (text, type) => {
     return found;
 };
 
-// Extract meaningful summary phrase from strengths
+// Look for standout phrases from strengths
 const extractStrengthPhrase = (text) => {
     const lower = text.toLowerCase();
-
-    if (lower.includes('drive') || lower.includes('rim')) {
-        return 'noted for elite driving ability';
-    }
-    if (lower.includes('quick first step')) {
-        return 'possesses a quick first step';
-    }
-    if (lower.includes('shoot')) {
-        return 'has advanced shooting mechanics';
-    }
-    if (lower.includes('defense') && lower.includes('versatile')) {
-        return 'defends multiple positions effectively';
-    }
-    if (lower.includes('playmake')) {
-        return 'has advanced playmaking skills';
-    }
-    if (lower.includes('rebound')) {
-        return 'has advanced rebounding skills';
-    }
-
-
-    return null; // No match
+    if (lower.includes('drive') || lower.includes('rim')) return 'noted for elite driving ability';
+    if (lower.includes('quick first step')) return 'possesses a quick first step';
+    if (lower.includes('shoot')) return 'has advanced shooting mechanics';
+    if (lower.includes('defense') && lower.includes('versatile')) return 'defends multiple positions effectively';
+    if (lower.includes('playmake')) return 'has advanced playmaking skills';
+    if (lower.includes('rebound')) return 'has advanced rebounding skills';
+    return null;
 };
 
-// Extract meaningful summary phrase from weaknesses
+// Look for standout phrases from weaknesses
 const extractWeaknessPhrase = (text) => {
     const lower = text.toLowerCase();
-
-    if (lower.includes('turnover')) {
-        return 'struggles with turnovers under pressure';
-    }
-    if (lower.includes('cost') || lower.includes('mistake')) {
-        return 'has made costly mistakes in big moments';
-    }
-    if (lower.includes('decision') && lower.includes('poor')) {
-        return 'needs to improve decision-making';
-    }
-    if (lower.includes('defense')) {
-        return 'has lapses in defensive consistency';
-    }
-    if (lower.includes('offense')) {
-        return 'has lapses in offensive consistency';
-    }
-    if (lower.includes('patience')) {
-        return 'needs to improve patience with or without basketball';
-    }
-    return null; // No match
+    if (lower.includes('turnover')) return 'struggles with turnovers under pressure';
+    if (lower.includes('cost') || lower.includes('mistake')) return 'has made costly mistakes in big moments';
+    if (lower.includes('decision') && lower.includes('poor')) return 'needs to improve decision-making';
+    if (lower.includes('defense')) return 'has lapses in defensive consistency';
+    if (lower.includes('offense')) return 'has lapses in offensive consistency';
+    if (lower.includes('patience')) return 'needs to improve patience with or without basketball';
+    return null;
 };
 
-// Main summary generator component
 const SummaryGenerator = ({ report }) => {
-    // Don't render anything if no report provided
+    // Exit early if report not available
     if (!report) return null;
 
-    // Destructure report fields
-    const {
-        role,
-        ceiling,
-        ratings,
-        strengths,
-        weaknesses,
-        comparison,
-        fit,
-        range,
-    } = report;
+    // Destructure fields from the report
+    const { role, ceiling, ratings, strengths, weaknesses, comparison, fit, range } = report;
 
-    // Identify top traits (rated 8 or above)
-    const topTraits = Object.entries(ratings)
-        .filter(([_, val]) => val >= 8)
-        .map(([trait]) => trait);
+    // Identify traits scored highly and poorly
+    const topTraits = Object.entries(ratings).filter(([_, val]) => val >= 8).map(([trait]) => trait);
+    const weakTraits = Object.entries(ratings).filter(([_, val]) => val <= 4).map(([trait]) => trait);
 
-    // Identify weak traits (rated 4 or below)
-    const weakTraits = Object.entries(ratings)
-        .filter(([_, val]) => val <= 4)
-        .map(([trait]) => trait);
-
-    // Extract keyword hits and meaningful phrases from free-form text
+    // Collect keywords and key phrases
     const strengthKeywords = extractKeywords(strengths, 'strengths');
     const weaknessKeywords = extractKeywords(weaknesses, 'weaknesses');
     const strengthPhrase = extractStrengthPhrase(strengths);
     const weaknessPhrase = extractWeaknessPhrase(weaknesses);
 
-    // Determine role-ceiling gap (developmental potential)
+    // Compute gap between current role and projected ceiling
     const roleIndex = roles.indexOf(role);
     const ceilingIndex = ceilings.indexOf(ceiling);
     const gap = ceilingIndex - roleIndex;
 
-    // Build the textual summary
+    // Assemble summary string
     let summary = '';
 
-    if (topTraits.length) {
-        summary += `Strong traits include ${topTraits.join(', ')}. `;
-    }
+    if (topTraits.length) summary += `Strong traits include ${topTraits.join(', ')}. `;
+    if (strengthKeywords.length) summary += `Described as ${strengthKeywords.join(', ')}. `;
+    if (strengthPhrase) summary += `Also ${strengthPhrase}. `;
+    if (weakTraits.length) summary += `Needs development in ${weakTraits.join(', ')}. `;
+    if (weaknessKeywords.length) summary += `Concerns include ${weaknessKeywords.join(', ')}. `;
+    if (weaknessPhrase) summary += `Furthermore, ${weaknessPhrase}. `;
 
-    if (strengthKeywords.length) {
-        summary += `Described as ${strengthKeywords.join(', ')}. `;
-    }
+    // Projected developmental potential
+    if (gap >= 3) summary += `High variance prospect with significant upside beyond current role. `;
+    else if (gap === 2) summary += `Moderate gap between role and ceiling with growth potential. `;
+    else summary += `Projection aligns closely with current role. `;
 
-    if (strengthPhrase) {
-        summary += `Also ${strengthPhrase}. `;
-    }
-
-    if (weakTraits.length) {
-        summary += `Needs development in ${weakTraits.join(', ')}. `;
-    }
-
-    if (weaknessKeywords.length) {
-        summary += `Concerns include ${weaknessKeywords.join(', ')}. `;
-    }
-
-    if (weaknessPhrase) {
-        summary += `Furthermore, ${weaknessPhrase}. `;
-    }
-
-    // Interpret gap level
-    if (gap >= 3) {
-        summary += `High variance prospect with significant upside beyond current role. `;
-    } else if (gap === 2) {
-        summary += `Moderate gap between role and ceiling with growth potential. `;
-    } else {
-        summary += `Projection aligns closely with current role. `;
-    }
-
-    // Final contextual information (comparison, fit, draft range)
+    // Final projection context
     summary += `Compared to ${comparison || 'N/A'}, fits best with ${fit || 'N/A'}, and is expected to be drafted in the ${range} range.`;
 
-    // Render the generated summary
+    // Styled output using MUI
     return (
-        <div style={{ marginTop: '1rem', background: '#eef4ff', padding: '1rem', borderRadius: '6px' }}>
-            <h4>Scouting Summary</h4>
-            <p>{summary}</p>
-        </div>
+        <Paper elevation={2} sx={{ mt: 3, p: 2, backgroundColor: '#eef4ff', borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom>Scouting Summary</Typography>
+            <Typography variant="body1">{summary}</Typography>
+        </Paper>
     );
 };
 
