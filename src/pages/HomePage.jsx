@@ -19,33 +19,33 @@ import {
 import PlayerCard from '../components/PlayerCard.jsx';
 
 const HomePage = () => {
-    // === State hooks for filters, sorting, and comparison ===
-    const [players, setPlayers] = useState([]);               // Full merged player list
-    const [sortBy, setSortBy] = useState('average');          // Sorting method
-    const [searchQuery, setSearchQuery] = useState('');       // Search input
-    const [teamFilter, setTeamFilter] = useState('');         // Team dropdown
-    const [leagueFilter, setLeagueFilter] = useState('');     // League dropdown
-    const [allTeams, setAllTeams] = useState([]);             // Available team options
-    const [allLeagues, setAllLeagues] = useState([]);         // Available league options
-    const [compareList, setCompareList] = useState([]);       // Players selected for comparison
-    const [snackOpen, setSnackOpen] = useState(false);        // Snackbar open state for max compare limit
+    // === State hooks for filters, sorting, and player comparison list ===
+    const [players, setPlayers] = useState([]);               // Holds all players with merged bio and rankings
+    const [sortBy, setSortBy] = useState('average');          // Current sorting criteria
+    const [searchQuery, setSearchQuery] = useState('');       // Current text in the search bar
+    const [teamFilter, setTeamFilter] = useState('');         // Selected team filter
+    const [leagueFilter, setLeagueFilter] = useState('');     // Selected league filter
+    const [allTeams, setAllTeams] = useState([]);             // All unique teams for dropdown
+    const [allLeagues, setAllLeagues] = useState([]);         // All unique leagues for dropdown
+    const [compareList, setCompareList] = useState([]);       // List of players selected for comparison (max 3)
+    const [snackOpen, setSnackOpen] = useState(false);        // Controls the visibility of snackbar
 
-    // === Load and prepare player data on component mount or when sort changes ===
+    // === Load player data from JSON file and populate filters/sort players ===
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then((res) => res.json())
             .then((data) => {
-                // Merge bio and ranking info into single player object
+                // Merge bio and rankings into a single object per player
                 const merged = data.bio.map(player => {
                     const ranking = data.scoutRankings.find(r => r.playerId === player.playerId);
                     return { ...player, scoutRankings: ranking };
                 });
 
-                // Populate unique team and league filter options
+                // Extract unique teams and leagues for dropdown filters
                 setAllTeams([...new Set(merged.map(p => p.currentTeam).filter(Boolean))].sort());
                 setAllLeagues([...new Set(merged.map(p => p.league).filter(Boolean))].sort());
 
-                // Sort merged players using current sorting method
+                // Sort players using current sort criteria
                 const sorted = [...merged].sort((a, b) => {
                     const rankA = getRankValue(a.scoutRankings, sortBy);
                     const rankB = getRankValue(b.scoutRankings, sortBy);
@@ -54,11 +54,11 @@ const HomePage = () => {
 
                 setPlayers(sorted);
             });
-    }, [sortBy]);
+    }, [sortBy]); // Reload whenever sort method changes
 
-    // === Helper: Get value to sort by (average or individual scout rank) ===
+    // === Helper function to determine ranking value for sorting ===
     const getRankValue = (rankings = {}, key) => {
-        if (!rankings) return Infinity;
+        if (!rankings) return Infinity; // No data means lowest priority
 
         if (key === 'average') {
             const values = Object.entries(rankings)
@@ -71,49 +71,58 @@ const HomePage = () => {
         return typeof rankings[key] === 'number' ? rankings[key] : Infinity;
     };
 
-    // === Toggle a player in/out of the comparison list ===
+    // === Add/remove a player from the comparison list (max 3 players) ===
     const toggleCompare = (player) => {
         const exists = compareList.find(p => p.playerId === player.playerId);
 
         if (exists) {
-            // Remove player directly
+            // Remove player if already in list
             setCompareList(compareList.filter(p => p.playerId !== player.playerId));
         } else if (compareList.length < 3) {
-            // Add player
+            // Add player if under limit
             setCompareList([...compareList, player]);
         } else {
-            // Show snackbar if attempting to add a 4th player
+            // Show snackbar warning if limit exceeded
             setSnackOpen(true);
         }
     };
 
-    // === Apply filters and search to player list ===
+    // === Filter players based on search input, team, and league ===
     const filteredPlayers = players.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
         (!teamFilter || p.currentTeam === teamFilter) &&
         (!leagueFilter || p.league === leagueFilter)
     );
 
+    // === Clear all filters ===
+    const resetFilters = () => {
+        setSearchQuery('');
+        setTeamFilter('');
+        setLeagueFilter('');
+    };
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            {/* Page Title with Mavericks Logo */}
+            {/* === Title and Top Logo === */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h4" fontWeight={600}>
                     NBA Draft Big Board
                 </Typography>
 
-                {/* Mavericks logo image */}
-                <img
-                    src="/mavs.png"
-                    alt="Mavericks Logo"
-                    style={{
-                        height: 110,
-                        objectFit: 'contain'
-                    }}
-                />
+                {/* Mavericks logo positioned in top-right corner */}
+                <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
+                    <img
+                        src="/mavs.png"
+                        alt="Mavericks Logo"
+                        style={{
+                            height: 150,
+                            objectFit: 'contain'
+                        }}
+                    />
+                </Box>
             </Box>
 
-            {/* === Comparison Banner === */}
+            {/* === Comparison Preview Banner === */}
             {compareList.length > 0 && (
                 <Paper elevation={3} sx={{ p: 2, mb: 3, bgcolor: '#eef4ff' }}>
                     <Typography variant="body1" component="span">
@@ -131,9 +140,9 @@ const HomePage = () => {
                 </Paper>
             )}
 
-            {/* === Filter Section === */}
+            {/* === Filter Controls Section === */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={3}>
-                {/* Search Input */}
+                {/* Search bar for player names */}
                 <TextField
                     label="Search Player"
                     value={searchQuery}
@@ -141,7 +150,7 @@ const HomePage = () => {
                     sx={{ minWidth: 200 }}
                 />
 
-                {/* Team Filter Dropdown */}
+                {/* Dropdown for team selection */}
                 <FormControl sx={{ minWidth: 200 }}>
                     <InputLabel id="team-label">Filter by Team</InputLabel>
                     <Select
@@ -157,7 +166,7 @@ const HomePage = () => {
                     </Select>
                 </FormControl>
 
-                {/* League Filter Dropdown */}
+                {/* Dropdown for league selection */}
                 <FormControl sx={{ minWidth: 200 }}>
                     <InputLabel id="league-label">Filter by League</InputLabel>
                     <Select
@@ -173,7 +182,7 @@ const HomePage = () => {
                     </Select>
                 </FormControl>
 
-                {/* Sort Method Dropdown */}
+                {/* Dropdown for sorting method */}
                 <FormControl sx={{ minWidth: 250 }}>
                     <InputLabel id="sort-label">Sort By</InputLabel>
                     <Select
@@ -190,9 +199,19 @@ const HomePage = () => {
                         <MenuItem value="Gary Parrish Rank">Gary Parrish Rank</MenuItem>
                     </Select>
                 </FormControl>
+
+                {/* Button to reset all filters */}
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={resetFilters}
+                    sx={{ minWidth: 150 }}
+                >
+                    Reset Filters
+                </Button>
             </Stack>
 
-            {/* === Player Cards Grid === */}
+            {/* === Grid of Player Cards === */}
             <Grid container spacing={3}>
                 {filteredPlayers.map(player => (
                     <Grid item xs={12} sm={6} md={4} key={player.playerId}>
@@ -205,7 +224,7 @@ const HomePage = () => {
                 ))}
             </Grid>
 
-            {/* === Snackbar for Max Compare Limit === */}
+            {/* === Snackbar for Too Many Comparisons === */}
             <Snackbar
                 open={snackOpen}
                 autoHideDuration={3000}

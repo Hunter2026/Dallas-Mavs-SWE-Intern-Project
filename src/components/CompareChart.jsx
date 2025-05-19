@@ -5,10 +5,10 @@ import {
 } from 'recharts';
 import { Box, Typography, Paper } from '@mui/material';
 
-// === Stats to visualize in the career stats chart ===
+// === List of career statistics to include in the stat bar chart ===
 const statKeys = ['PTS', 'TRB', 'AST', 'STL', 'BLK', 'TOV', 'FG%', '3P%', 'FTP'];
 
-// === Measurement fields with display labels for the measurements chart ===
+// === List of measurement fields and display labels ===
 const measurementKeys = [
     { key: 'heightNoShoes', label: 'Height (No Shoes)' },
     { key: 'heightShoes', label: 'Height (With Shoes)' },
@@ -25,11 +25,14 @@ const measurementKeys = [
     { key: 'bodyFat', label: 'Body Fat %' }
 ];
 
+// === Colors for each player bar in the chart (cycled by index) ===
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658'];
 
+// === Custom tooltip component for displaying contextual data with units ===
 const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
 
+    // Map of measurement labels to appropriate units
     const unitsMap = {
         'Height (No Shoes)': '"',
         'Height (With Shoes)': '"',
@@ -46,7 +49,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         'Body Fat': '%'
     };
 
-    const unit = unitsMap[label] || '';
+    const unit = unitsMap[label] || ''; // Default to empty if unit not found
 
     return (
         <Paper elevation={3} sx={{ p: 2 }}>
@@ -65,20 +68,26 @@ const CustomTooltip = ({ active, payload, label }) => {
 const CompareChart = ({ players, seasonLogs, measurements }) => {
     if (!players || players.length === 0) return null;
 
+    // === Build data for the career stat comparison chart ===
     const careerStatData = statKeys.map(stat => {
         const row = { stat };
         players.forEach(player => {
+            // Filter logs for the current player
             const logs = seasonLogs.filter(
                 l => l.playerId?.toString() === player.playerId.toString()
             );
+
+            // Compute weighted average (based on games played)
             const totalGP = logs.reduce((sum, l) => sum + l.GP, 0);
             const total = logs.reduce((sum, l) => sum + (l[stat] ?? 0) * l.GP, 0);
             const avg = totalGP > 0 ? total / totalGP : 0;
+
             row[player.name] = Number(avg.toFixed(1));
         });
         return row;
     });
 
+    // === Build data for the measurement comparison chart ===
     const measurementChartData = measurementKeys.map(({ key, label }) => {
         const row = { measurement: label };
         players.forEach(player => {
@@ -90,6 +99,7 @@ const CompareChart = ({ players, seasonLogs, measurements }) => {
 
     return (
         <Box sx={{ mt: 6 }}>
+            {/* === Section: Measurement Comparison Bar Chart === */}
             <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>Measurement Comparison</Typography>
             <Box sx={{ overflowX: 'auto' }}>
                 <Box sx={{ minWidth: 1500 }}>
@@ -117,6 +127,7 @@ const CompareChart = ({ players, seasonLogs, measurements }) => {
                 </Box>
             </Box>
 
+            {/* === Section: Career Stats Comparison Bar Chart === */}
             <Typography variant="h5" sx={{ mt: 6, mb: 3, fontWeight: 600 }}>Career Stat Comparison</Typography>
             <Box sx={{ overflowX: 'auto' }}>
                 <Box sx={{ minWidth: 1200 }}>

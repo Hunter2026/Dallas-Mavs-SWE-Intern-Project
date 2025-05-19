@@ -1,7 +1,11 @@
 import React from 'react';
 import { Paper, Typography, List, ListItem, ListItemText } from '@mui/material';
 
-// Define measurement fields with labels and units
+// === Measurement field definitions ===
+// Each object includes:
+// - key: matches the property in the measurement object
+// - label: readable name
+// - unit: appended to display values properly
 const statFields = [
     { key: 'heightNoShoes', label: 'Height (No Shoes)', unit: '"' },
     { key: 'heightShoes', label: 'Height (With Shoes)', unit: '"' },
@@ -18,35 +22,42 @@ const statFields = [
     { key: 'bodyFat', label: 'Body Fat %', unit: '%' },
 ];
 
+// === Main Component: MeasurementComparison ===
 const MeasurementComparison = ({ player, measurements }) => {
-    // Guard clause: if no player or data
+    // === Return nothing if missing props or empty data ===
     if (!player || !Array.isArray(measurements) || measurements.length === 0) return null;
 
-    // Find the current player's measurements
+    // === Locate the current player's measurement data ===
     const current = measurements.find(m => m.playerId === player.playerId);
     if (!current) return <Typography>No measurements to compare.</Typography>;
 
-    // Get peer group (everyone except current player)
+    // === Identify peer group (exclude current player) ===
     const peers = measurements.filter(m => m.playerId !== player.playerId);
 
-    // Compute average values for each measurement field
+    // === Compute average value for each measurement field from peer group ===
     const averages = {};
     statFields.forEach(({ key }) => {
         const values = peers.map(p => p[key]).filter(v => typeof v === 'number' && !isNaN(v));
-        const avg = values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : null;
+        const avg = values.length > 0
+            ? values.reduce((sum, v) => sum + v, 0) / values.length
+            : null;
         averages[key] = avg;
     });
 
-    // Compare value to average and return label
+    // === Determine label based on how value compares to peer average ===
+    // `reverse` indicates that lower values are better (e.g., sprint, agility)
     const getLabel = (value, avg, reverse = false) => {
         if (value == null || isNaN(value) || avg == null) return 'N/A';
+
         const diff = value - avg;
+
         if (!reverse) {
             if (diff >= 5) return 'Elite';
             if (diff >= 1) return 'Above Avg';
             if (diff <= -1) return 'Below Avg';
             return 'Average';
         } else {
+            // Reverse logic: lower is better (e.g., sprint times)
             if (diff <= -0.3) return 'Elite';
             if (diff <= -0.1) return 'Above Avg';
             if (diff >= 0.3) return 'Below Avg';
@@ -54,26 +65,31 @@ const MeasurementComparison = ({ player, measurements }) => {
         }
     };
 
-    // Render styled measurement list with labels
+    // === Render the measurement comparison panel ===
     return (
         <Paper elevation={2} sx={{ mt: 4, p: 2, backgroundColor: '#eef4ff', borderRadius: 2 }}>
             <Typography variant="h6" gutterBottom><strong>Measurement Comparison to Peers</strong></Typography>
             <List dense>
                 {statFields.map(({ key, label, unit }) => {
-                    const val = current[key];
-                    const avg = averages[key];
-                    const isReverse = key === 'sprint' || key === 'agility'; // lower = better for these
+                    const val = current[key];         // Current player's value
+                    const avg = averages[key];        // Peer average
+                    const isReverse = key === 'sprint' || key === 'agility'; // For reverse scoring fields
 
-                    // Format values with unit or fallback to N/A
+                    // Format values for display
                     const formattedVal = val != null && !isNaN(val) ? `${val}${unit}` : 'N/A';
                     const formattedAvg = avg != null && !isNaN(avg) ? `${avg.toFixed(1)}${unit}` : 'N/A';
 
+                    // Get qualitative label (Elite, Above Avg, etc.)
                     const labelText = getLabel(val, avg, isReverse);
 
                     return (
                         <ListItem key={key} disablePadding>
                             <ListItemText
-                                primary={<span><strong>{label}:</strong> {formattedVal} ({labelText}, Avg: {formattedAvg})</span>}
+                                primary={
+                                    <span>
+                                        <strong>{label}:</strong> {formattedVal} ({labelText}, Avg: {formattedAvg})
+                                    </span>
+                                }
                             />
                         </ListItem>
                     );

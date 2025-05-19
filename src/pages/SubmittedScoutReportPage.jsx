@@ -13,22 +13,24 @@ import {
 } from '@mui/material';
 
 const SubmittedScoutReportPage = () => {
-    const { id } = useParams();
-    const [reports, setReports] = useState([]);
-    const [player, setPlayer] = useState(null);
+    const { id } = useParams(); // Get the player ID from the URL
+    const [reports, setReports] = useState([]); // Array of scouting reports for the player
+    const [player, setPlayer] = useState(null); // Bio data of the player
 
-    // Load saved reports from localStorage
+    // === Load saved scouting reports from localStorage on component mount ===
     useEffect(() => {
         const saved = localStorage.getItem(`report_player_${id}`);
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
+                // Ensure only valid report objects are used
                 const safeReports = Array.isArray(parsed)
                     ? parsed.filter(r => r && typeof r === 'object' && r.createdAt)
                     : (parsed && parsed.createdAt ? [parsed] : []);
 
                 setReports(safeReports);
             } catch (e) {
+                // Log an error if JSON parsing fails (corrupt localStorage data)
                 console.error('Corrupt scouting data for player', id);
                 setReports([]);
             }
@@ -37,7 +39,7 @@ const SubmittedScoutReportPage = () => {
         }
     }, [id]);
 
-    // Fetch player bio info
+    // === Fetch player bio information for display (name, etc.) ===
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
@@ -47,9 +49,16 @@ const SubmittedScoutReportPage = () => {
             });
     }, [id]);
 
+    // === Delete a specific report by its createdAt timestamp ===
+    const handleDeleteReport = (timestamp) => {
+        const updated = reports.filter(r => r.createdAt !== timestamp); // Remove report from array
+        setReports(updated); // Update state
+        localStorage.setItem(`report_player_${id}`, JSON.stringify(updated)); // Sync with localStorage
+    };
+
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
-            {/* NBA Scout Report Profile in Top Right */}
+            {/* === NBA Logo at Top Right === */}
             <Box sx={{ position: 'absolute', top: 16, right: 100 }}>
                 <img
                     src="/Scouting Report Profile.png"
@@ -58,24 +67,24 @@ const SubmittedScoutReportPage = () => {
                 />
             </Box>
 
-            {/* Back link */}
+            {/* === Navigation Back to Player Page === */}
             <Box mb={2}>
                 <Button component={Link} to={`/player/${id}`} variant="outlined">
                     ← Back to Player Profile
                 </Button>
             </Box>
 
-            {/* Title */}
+            {/* === Page Header === */}
             <Typography variant="h4" gutterBottom>
                 {player ? `${player.name} – Scouting Reports` : 'Scouting Reports'}
             </Typography>
 
-            {/* No reports */}
+            {/* === If no reports submitted yet === */}
             {reports.length === 0 ? (
                 <Typography>No scouting reports submitted yet for this player.</Typography>
             ) : (
                 <>
-                    {/* Most recent report */}
+                    {/* === Display Most Recent Report === */}
                     <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
                         <Typography variant="h6">Latest Report</Typography>
                         <Typography variant="body2" gutterBottom><strong>Submitted:</strong> {reports[0].createdAt}</Typography>
@@ -87,7 +96,7 @@ const SubmittedScoutReportPage = () => {
                         <Typography><strong>Projected Ceiling:</strong> {reports[0].ceiling}</Typography>
                         <Typography><strong>Draft Range:</strong> {reports[0].range}</Typography>
 
-                        {/* Trait ratings */}
+                        {/* === Display Trait Ratings in a List === */}
                         <Box mt={2}>
                             <Typography variant="subtitle1">Trait Ratings:</Typography>
                             <List dense>
@@ -99,16 +108,31 @@ const SubmittedScoutReportPage = () => {
                             </List>
                         </Box>
 
-                        {/* Summary output */}
+                        {/* === Auto-Generated Summary Component === */}
                         <SummaryGenerator report={reports[0]} />
+
+                        {/* === Option to Delete the Latest Report === */}
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            sx={{ mt: 4 }}
+                            onClick={() => handleDeleteReport(reports[0].createdAt)}
+                        >
+                            Delete Report
+                        </Button>
                     </Paper>
 
-                    {/* Previous reports */}
+                    {/* === Show older reports, if any === */}
                     {reports.length > 1 && (
                         <>
                             <Typography variant="h5" gutterBottom>Previous Reports</Typography>
                             {reports.slice(1).map((rep, index) => (
-                                <Paper key={index} elevation={1} sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5' }}>
+                                <Paper
+                                    key={index}
+                                    elevation={1}
+                                    sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5' }}
+                                >
                                     <Typography variant="subtitle2" gutterBottom>
                                         Submitted: {rep.createdAt}
                                     </Typography>
@@ -120,6 +144,7 @@ const SubmittedScoutReportPage = () => {
                                     <Typography><strong>Projected Ceiling:</strong> {rep.ceiling}</Typography>
                                     <Typography><strong>Draft Range:</strong> {rep.range}</Typography>
 
+                                    {/* Trait ratings for each previous report */}
                                     <Box mt={2}>
                                         <Typography variant="subtitle1">Trait Ratings:</Typography>
                                         <List dense>
@@ -131,7 +156,19 @@ const SubmittedScoutReportPage = () => {
                                         </List>
                                     </Box>
 
+                                    {/* Summary for older report */}
                                     <SummaryGenerator report={rep} />
+
+                                    {/* Delete button for older report */}
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        size="small"
+                                        sx={{ mt: 1 }}
+                                        onClick={() => handleDeleteReport(rep.createdAt)}
+                                    >
+                                        Delete Report
+                                    </Button>
                                 </Paper>
                             ))}
                         </>

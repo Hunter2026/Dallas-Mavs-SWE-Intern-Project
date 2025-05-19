@@ -1,16 +1,22 @@
-// Import React core libraries
+// main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-// Import the main App component
+// Main App
 import App from './App.jsx';
 
-// Optional: global styles
+// Global styles (optional)
 import './style.css';
 
-// Mount the App component into the <div id="root"> in index.html
+// Material UI theming
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from './theme'; // import your custom theme
+
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-        <App />
+        <ThemeProvider theme={theme}>
+            <CssBaseline /> {/* applies theme's background.default */}
+            <App />
+        </ThemeProvider>
     </React.StrictMode>
 );

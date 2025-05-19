@@ -13,26 +13,30 @@ import {
 } from '@mui/material';
 
 const PlayerPage = () => {
-    const { id } = useParams();
-    const [player, setPlayer] = useState(null);
+    const { id } = useParams(); // Extracts the player ID from the URL
+    const [player, setPlayer] = useState(null); // Holds the full player data including bio and rankings
 
-    // Fetch player data on load
+    // === Fetch player data when component mounts or when `id` changes ===
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
             .then(data => {
+                // Find the player bio by matching playerId from URL
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);
+                // Get scout rankings for that player
                 const rankings = data.scoutRankings.find(r => r.playerId.toString() === id);
+                // Merge both and store in state
                 setPlayer({ ...foundPlayer, scoutRankings: rankings });
             });
     }, [id]);
 
-    // Calculate age from birthdate
+    // === Utility: Calculate player's age based on birthdate ===
     const calculateAge = (birthDateString) => {
         const birthDate = new Date(birthDateString);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
 
+        // Adjust age if the player hasn't had their birthday yet this year
         const hasHadBirthdayThisYear =
             today.getMonth() > birthDate.getMonth() ||
             (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
@@ -41,11 +45,12 @@ const PlayerPage = () => {
         return age;
     };
 
+    // === Show loading message while data is being fetched ===
     if (!player) return <Typography>Loading...</Typography>;
 
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
-            {/* NBA Draft Logo in Top Right */}
+            {/* === NBA Draft Logo in Top Right === */}
             <Box sx={{ position: 'absolute', top: 100, right: 100 }}>
                 <img
                     src="/NBA Draft.png"
@@ -54,18 +59,18 @@ const PlayerPage = () => {
                 />
             </Box>
 
-            {/* Back link */}
+            {/* === Back Navigation Button === */}
             <Box mb={2}>
                 <Button component={Link} to="/" variant="outlined">
                     ← Back to Big Board
                 </Button>
             </Box>
 
-            {/* Player Info Card */}
+            {/* === Main Player Info Card === */}
             <Card elevation={3}>
                 <CardContent>
                     <Grid container spacing={3}>
-                        {/* Avatar and Name */}
+                        {/* === Left Column: Player Image and Name === */}
                         <Grid item xs={12} sm={4}>
                             {player.photoUrl ? (
                                 <Avatar
@@ -83,7 +88,7 @@ const PlayerPage = () => {
                             </Typography>
                         </Grid>
 
-                        {/* Bio Info */}
+                        {/* === Right Column: Player Bio Information === */}
                         <Grid item xs={12} sm={8}>
                             <Typography><strong>Current Team:</strong> {player.currentTeam}</Typography>
                             <Typography><strong>Age:</strong> {calculateAge(player.birthDate)}</Typography>
@@ -100,7 +105,7 @@ const PlayerPage = () => {
                 </CardContent>
             </Card>
 
-            {/* Navigation buttons */}
+            {/* === Navigation Buttons to Additional Player Pages === */}
             <Box mt={3} mb={2} display="flex" gap={2} flexWrap="wrap">
                 <Button
                     component={Link}
@@ -126,16 +131,18 @@ const PlayerPage = () => {
                 </Button>
             </Box>
 
-            {/* Scout Rankings */}
+            {/* === Divider and Scout Rankings Section === */}
             <Divider sx={{ my: 3 }} />
             <Typography variant="h6" gutterBottom>Mavericks Scout Rankings</Typography>
+
+            {/* === Scout Rankings List === */}
             <Box component="ul" sx={{ pl: 2 }}>
                 {Object.entries(player.scoutRankings || {}).map(([scout, rank]) => {
-                    if (scout === "playerId") return null;
+                    if (scout === "playerId") return null; // Skip internal ID field
                     return (
                         <li key={scout}>
                             <Typography variant="body2">
-                                {scout}: {rank ?? 'N/A'}
+                                {scout}: {rank ?? 'N/A'} {/* Show N/A if rank is undefined/null */}
                             </Typography>
                         </li>
                     );

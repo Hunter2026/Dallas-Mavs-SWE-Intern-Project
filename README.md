@@ -1,61 +1,116 @@
-Installing React:
+# NBA Draft Hub
 
-npm install react react-dom
+A dynamic React application for evaluating prospects in the 2025 NBA Draft. This tool combines stats, scouting reports, and comparison charts to help scouts analyze player performance and potential.
 
-Installing React Router:
+---
 
-npm install react-router-dom
+## Data Source
 
-Installing React Chart:
+All player information (bio, scout rankings, stats, measurements) is stored in:
+```
+public/intern_project_data.json
+```
 
-npm install recharts
+The app uses `fetch()` to load this data client-side.
 
-Installing MUI Packages:
+---
 
-npm install @mui/material @emotion/react @emotion/styled
+## Installation
 
-Running the program: 
+1. **Install dependencies:**
+    ```bash
+    npm install react react-dom
+    npm install react-router-dom
+    npm install recharts
+    npm install @mui/material @emotion/react @emotion/styled
+    ```
 
-npm run dev
+2. **Run the app:**
+    ```bash
+    npm run dev
+    ```
+   
+---
 
-Data Source:
+## Project Structure
 
-Player data is stored in public/intern_project_data.json and loaded using fetch() in the frontend.
+## Key Pages
+- **HomePage.jsx** – Big board view with player cards, filtering, sorting, and comparison selection.
+- **PlayerPage.jsx** – Individual player profile with bio, scout rankings, and navigation.
+- **StatsMeasurementsPage.jsx** – Displays player measurements, career stats, and game logs.
+- **ScoutFormPage.jsx** – Interactive scouting report form including trait sliders and dropdowns.
+- **SubmittedScoutReportPage.jsx** – Shows previously submitted scouting reports per player.
+- **ComparePage.jsx** – Enables side-by-side comparison of up to three players.
 
-Features:
+## Key Components
 
-Big Board along with scout rankings of all prospects in 2025 NBA Draft
+### CompareChart.jsx
+- Renders dual bar charts: one for measurements, another for career stats.
+- Uses Recharts and MUI.
+- Accepts up to 3 players for comparison.
+- Includes custom tooltip and responsive styling.
 
-User can navigate from Big Board to player cards. The user can access an individual player card by clicking on the player name in the big board. 
-Inside the player card, the user can see the cards so far representing available photo,
-height, weight, and hometown. Along with this information, the user can see the mavericks scout rankings
-and submit scouting reports, with the user being able to see what they typed when they click submit. 
+### MeasurementComparison.jsx
+- Compares a single player's measurements to peers in the same draft class.
+- Uses labels like “Elite”, “Above Avg”, or “Below Avg” based on statistical deltas.
+- Displays data as a styled MUI list.
 
-When the user clicks on the player profile, they are able to see the player's true measurements and 
-statistics through game logs or in season stats. They are also able to filter which season the player has those game logs 
-(there isn't enough game logs for more than one season but it's a nice feature for future purposes) and they have the ability
-to sort through stats in the game logs by most to least. 
+### PlayerCard.jsx
+- Used in the HomePage to show individual prospect info.
+- Displays scout rankings with color-coded rank deltas.
+- Includes “Add to Compare” toggle button.
 
-Since we have career averages, season averages, and game logs, I decided to implement a player development chart over their career
-to see increase or decrease in minutes, points, assists, total rebounds, steals and blocks. This way it is easy to see visually on whether
-a player's progression as been positive or negative.
+### PlayerDevelopment.jsx
+- Displays a line chart of season-by-season performance for selected stats (PTS, AST, TRB, etc.).
+- Allows toggling of individual stats and “Select All”.
+- Includes tooltip with age and team info.
 
-Now to focus on the scouting side, I have added a scouting form that which a user can add the player's strengths, weaknesses, 
-player comparison, the best NBA fit (team), projected role, projected ceiling, draft range, and a trait rating. This trait rating has
-numbers 0-10 based on shooting, ball handling, defense, athleticism, IQ, and motor that the user can select. 
+### SummaryGenerator.jsx
+- AI-style summary generator for scouting reports.
+- Extracts keywords, classifies traits, and summarizes potential based on role vs. ceiling gap.
+- Enhances reports for fast consumption.
 
-On top of the full submitted report, I have added a generated simple summary to get the main idea of the player in a few sentences, 
-making it easy for scouts to process information quickly. These submitted reports will be able to be viewed on a submitted reports page
-where scouts can compare reports with one another in the present or future. 
+---
 
-For more functionality in the big board, I added filters for player names, teams, and leagues along with previously implemented
-scout rankings. In the stats and measurement page, I have also added more capability in terms of comparing measurements with peers
-in their own draft class. That way, scouts can determine on they stack up against their counterparts. 
+Each component is modular and styled with Material UI for consistency and responsiveness.
 
-In addition to the new functionality in the big board, I implemented a comparison tool to where the user can add up to 3 players
-to compare measurements and statistics with each other. The user can see the players that have been added to the comparison tool with a
-comparison chart at the top of the big board. Inside the comparison tool page, the user can see the measurements and statistics in written form
-and bar chart form, offering a visual interpretation instead of text. 
+---
 
-Lastly, I implemented Material UI components all throughout my project, making the features easy to navigate and appealing to the user. 
+## Features
+
+### Navigation
+- Navigate from big board to player pages.
+- Access player profile, stats/measurements, scouting form, and reports.
+
+### Player Evaluation
+- View scout rankings (ESPN, Sam Vecenie, etc.)
+- Display measurements and advanced stats (season/game-level).
+- Sort game logs and filter by season.
+- Career and season averages computed dynamically.
+
+### Visual Insights
+- Player development charts show trends in PTS, MIN, AST, etc.
+- Bar chart comparisons of player measurements and stats.
+
+### Scouting Tools
+- Submit detailed reports including:
+  - Strengths, weaknesses, player comparison
+  - Best NBA fit, projected role, ceiling, draft range
+  - Trait sliders: shooting, handling, defense, etc.
+- Generated summaries for quick insights.
+- Saved to `localStorage` and viewable on report pages.
+
+### Comparison Tool
+- Select up to 3 players for side-by-side comparison.
+- Compare measurements and career averages in text and chart form.
+
+### Material UI
+- Styled using MUI for clean layout and responsive design.
+
+---
+
+## Future Improvements
+- Backend integration for persistent report storage.
+- Expand to include combine invites, interview grades, and team meetings.
+- Enhanced filtering and custom scout profiles.
 

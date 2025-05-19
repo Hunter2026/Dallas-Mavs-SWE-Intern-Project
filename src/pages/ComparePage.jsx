@@ -16,14 +16,15 @@ import {
 } from '@mui/material';
 
 const ComparePage = () => {
-    const location = useLocation();
-    const query = new URLSearchParams(location.search);
-    const ids = query.get('ids')?.split(',').slice(0, 3) || [];
+    const location = useLocation(); // React Router hook to access URL query parameters
+    const query = new URLSearchParams(location.search); // Parse query string
+    const ids = query.get('ids')?.split(',').slice(0, 3) || []; // Extract up to 3 player IDs
 
-    const [players, setPlayers] = useState([]);
-    const [measurements, setMeasurements] = useState([]);
-    const [seasonLogs, setSeasonLogs] = useState([]);
+    const [players, setPlayers] = useState([]);         // Player bios to be displayed
+    const [measurements, setMeasurements] = useState([]); // Measurement data for selected players
+    const [seasonLogs, setSeasonLogs] = useState([]);     // Season log data for selected players
 
+    // === Fetch player, measurement, and season data when IDs change ===
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
@@ -31,26 +32,30 @@ const ComparePage = () => {
                 const selectedPlayers = data.bio.filter(p => ids.includes(p.playerId.toString()));
                 const selectedMeasurements = data.measurements?.filter(m => ids.includes(m.playerId?.toString())) || [];
                 const selectedSeasonLogs = data.seasonLogs?.filter(l => ids.includes(l.playerId?.toString())) || [];
+
                 setPlayers(selectedPlayers);
                 setMeasurements(selectedMeasurements);
                 setSeasonLogs(selectedSeasonLogs);
             });
     }, [ids]);
 
+    // === Helper: Get a specific measurement value for a player ===
     const getMeasurements = (playerId, key) => {
         const m = measurements.find(m => m.playerId?.toString() === playerId.toString());
         const val = m?.[key];
         return val !== undefined && val !== null ? val : 'N/A';
     };
 
+    // === Helper: Compute career average for a given stat ===
     const getCareerAvg = (playerId, statKey) => {
         const logs = seasonLogs.filter(l => l.playerId?.toString() === playerId.toString());
-        const totalGP = logs.reduce((sum, l) => sum + l.GP, 0);
+        const totalGP = logs.reduce((sum, l) => sum + l.GP, 0); // Total games played
         if (totalGP === 0) return '—';
-        const total = logs.reduce((sum, l) => sum + (l[statKey] ?? 0) * l.GP, 0);
-        return (total / totalGP).toFixed(1);
+        const total = logs.reduce((sum, l) => sum + (l[statKey] ?? 0) * l.GP, 0); // Weighted sum
+        return (total / totalGP).toFixed(1); // Weighted average
     };
 
+    // === Guard clause: If fewer than 2 players are selected ===
     if (!players || players.length < 2) {
         return (
             <Container sx={{ py: 4 }}>
@@ -65,14 +70,14 @@ const ComparePage = () => {
 
     return (
         <Container sx={{ py: 4 }}>
-            {/* Header and back navigation */}
+            {/* === Navigation Header === */}
             <Box mb={3}>
                 <Button component={Link} to="/" variant="outlined">← Back to Big Board</Button>
             </Box>
 
             <Typography variant="h4" gutterBottom>Player Comparison</Typography>
 
-            {/* Comparison cards for each player */}
+            {/* === Comparison Cards for Each Player === */}
             <Grid container spacing={4} justifyContent="center" mb={4}>
                 {players.map(player => (
                     <Grid item xs={12} sm={6} md={4} key={player.playerId}>
@@ -81,7 +86,7 @@ const ComparePage = () => {
                             <Typography variant="body2" gutterBottom><strong>Team:</strong> {player.currentTeam}</Typography>
                             <Typography variant="body2" gutterBottom><strong>League:</strong> {player.league}</Typography>
 
-                            {/* Measurement section */}
+                            {/* === Player Measurements === */}
                             <Typography variant="subtitle1" sx={{ mt: 2 }}><strong>Measurements</strong></Typography>
                             <List dense>
                                 <ListItem><ListItemText primary={<strong>Height (No Shoes):</strong>} secondary={`${getMeasurements(player.playerId, 'heightNoShoes')}"`} /></ListItem>
@@ -99,7 +104,7 @@ const ComparePage = () => {
                                 <ListItem><ListItemText primary={<strong>Body Fat %:</strong>} secondary={getMeasurements(player.playerId, 'bodyFat')} /></ListItem>
                             </List>
 
-                            {/* Career averages section */}
+                            {/* === Career Stats Section === */}
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="subtitle1"><strong>Career Averages</strong></Typography>
                             <List dense>
@@ -118,8 +123,12 @@ const ComparePage = () => {
                 ))}
             </Grid>
 
-            {/* Chart showing comparative data */}
-            <CompareChart players={players} seasonLogs={seasonLogs} measurements={measurements} />
+            {/* === Comparison Chart Visualization === */}
+            <CompareChart
+                players={players}
+                seasonLogs={seasonLogs}
+                measurements={measurements}
+            />
         </Container>
     );
 };

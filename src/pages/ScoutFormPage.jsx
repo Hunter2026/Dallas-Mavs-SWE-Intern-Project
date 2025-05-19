@@ -17,19 +17,19 @@ import {
     Alert
 } from '@mui/material';
 
-// Dropdown constants
+// === Constants for dropdown options ===
 const roles = ['Starter', 'Role Player', 'Bench', 'Developmental'];
 const ceilings = ['Hall of Famer', 'All-NBA', 'All-Star', 'High-Level Starter', 'Starter', 'Rotation Player', 'Fringe Roster'];
 const draftRanges = ['Lottery', 'Mid 1st', 'Late 1st', '2nd Round', 'Undrafted'];
 const traits = ['Shooting', 'Ball Handling', 'Defense', 'Athleticism', 'IQ', 'Motor'];
 
 const ScoutFormPage = ({ onSubmit }) => {
-    const { id } = useParams();
-    const [player, setPlayer] = useState(null);
-    const [submittedReport, setSubmittedReport] = useState(null);
-    const reportRef = useRef(null);
+    const { id } = useParams(); // Get player ID from URL
+    const [player, setPlayer] = useState(null); // Stores current player bio
+    const [submittedReport, setSubmittedReport] = useState(null); // Stores most recent submitted report
+    const reportRef = useRef(null); // Used to scroll to the report after submission
 
-    // Form fields state
+    // === Form state fields ===
     const [strengths, setStrengths] = useState('');
     const [weaknesses, setWeaknesses] = useState('');
     const [comparison, setComparison] = useState('');
@@ -37,10 +37,10 @@ const ScoutFormPage = ({ onSubmit }) => {
     const [role, setRole] = useState('');
     const [ceiling, setCeiling] = useState('');
     const [range, setRange] = useState('');
-    const [ratings, setRatings] = useState(traits.reduce((acc, t) => ({ ...acc, [t]: 5 }), {}));
-    const [error, setError] = useState(null);
+    const [ratings, setRatings] = useState(traits.reduce((acc, t) => ({ ...acc, [t]: 5 }), {})); // Default ratings = 5
+    const [error, setError] = useState(null); // Validation error message
 
-    // Fetch player info on mount
+    // === Fetch player bio on page load ===
     useEffect(() => {
         fetch('/intern_project_data.json')
             .then(res => res.json())
@@ -50,21 +50,26 @@ const ScoutFormPage = ({ onSubmit }) => {
             });
     }, [id]);
 
-    // Update trait rating
+    // === Handle rating slider change ===
     const handleChange = (trait, value) => {
         setRatings(prev => ({ ...prev, [trait]: Number(value) }));
     };
 
-    // Handle form submission
+    // === Handle form submission ===
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Validate all required fields
-        if (!strengths.trim() || !weaknesses.trim() || !comparison.trim() || !fit.trim() || !role || !ceiling || !range || Object.values(ratings).some(val => typeof val !== 'number' || val < 0 || val > 10)) {
+        // Simple validation to ensure all fields are filled
+        if (
+            !strengths.trim() || !weaknesses.trim() || !comparison.trim() || !fit.trim() ||
+            !role || !ceiling || !range ||
+            Object.values(ratings).some(val => typeof val !== 'number' || val < 0 || val > 10)
+        ) {
             setError('Please complete all fields before submitting.');
             return;
         }
 
+        // Construct report object
         const report = {
             strengths,
             weaknesses,
@@ -77,14 +82,17 @@ const ScoutFormPage = ({ onSubmit }) => {
             createdAt: new Date().toLocaleString(),
         };
 
+        // Callback if one exists
         if (onSubmit) {
             onSubmit(report);
         } else {
             console.log('Scouting Report:', report);
         }
 
+        // Save to state
         setSubmittedReport(report);
 
+        // Save to localStorage (persistent storage)
         const existing = localStorage.getItem(`report_player_${id}`);
         let existingReports = [];
         try {
@@ -96,7 +104,7 @@ const ScoutFormPage = ({ onSubmit }) => {
         const updatedReports = [report, ...existingReports];
         localStorage.setItem(`report_player_${id}`, JSON.stringify(updatedReports));
 
-        // Reset fields
+        // Reset form
         setStrengths('');
         setWeaknesses('');
         setComparison('');
@@ -108,7 +116,7 @@ const ScoutFormPage = ({ onSubmit }) => {
         setError(null);
     };
 
-    // Scroll to submitted report
+    // === Scroll to report after it's submitted ===
     useEffect(() => {
         if (submittedReport && reportRef.current) {
             setTimeout(() => {
@@ -119,11 +127,12 @@ const ScoutFormPage = ({ onSubmit }) => {
         }
     }, [submittedReport]);
 
+    // === While waiting on player info ===
     if (!player) return <Typography>Loading player info...</Typography>;
 
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
-            {/* NBA Scout Report in Top Right */}
+            {/* === NBA Scout Report Logo === */}
             <Box sx={{ position: 'absolute', top: 16, right: 100 }}>
                 <img
                     src="/NBA Scout Report.png"
@@ -132,7 +141,7 @@ const ScoutFormPage = ({ onSubmit }) => {
                 />
             </Box>
 
-            {/* Back to profile */}
+            {/* === Navigation Links === */}
             <Box mb={2}>
                 <Button component={Link} to={`/player/${player.playerId}`} variant="outlined">
                     ← Back to Player Profile
@@ -141,19 +150,18 @@ const ScoutFormPage = ({ onSubmit }) => {
 
             <Typography variant="h4" gutterBottom>{player.name} - Scouting Report</Typography>
 
-            {/* Link to stats */}
             <Box mb={2}>
                 <Button component={Link} to={`/player/${id}/stats`} variant="contained">
                     View Stats & Measurements
                 </Button>
             </Box>
 
-            {/* Scouting Form */}
+            {/* === Scouting Form === */}
             <Paper sx={{ p: 3 }} component="form" onSubmit={handleSubmit}>
                 <Typography variant="h6" gutterBottom>Scouting Evaluation</Typography>
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                {/* Text fields */}
+                {/* === Input Text Fields === */}
                 <TextField
                     label={`Strengths (${strengths.trim().split(/\s+/).filter(Boolean).length} words)`}
                     multiline
@@ -180,14 +188,14 @@ const ScoutFormPage = ({ onSubmit }) => {
                     margin="normal"
                 />
                 <TextField
-                    label="Best NBA Fit (Team)"
+                    label="Best NBA Fit (Teams)"
                     fullWidth
                     value={fit}
                     onChange={(e) => setFit(e.target.value)}
                     margin="normal"
                 />
 
-                {/* Select dropdowns with improved width */}
+                {/* === Select Dropdowns for Role, Ceiling, Draft Range === */}
                 <Grid container spacing={2} mt={1}>
                     <Grid item xs={12} sm={4}>
                         <FormControl fullWidth>
@@ -215,7 +223,7 @@ const ScoutFormPage = ({ onSubmit }) => {
                     </Grid>
                 </Grid>
 
-                {/* Trait sliders */}
+                {/* === Trait Ratings (0–10 sliders) === */}
                 <Box mt={4}>
                     <Typography variant="subtitle1" gutterBottom>Trait Ratings (0–10)</Typography>
                     {traits.map(trait => (
@@ -233,13 +241,13 @@ const ScoutFormPage = ({ onSubmit }) => {
                     ))}
                 </Box>
 
-                {/* Submit button */}
+                {/* === Submit Button === */}
                 <Button type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
                     Submit Scouting Report
                 </Button>
             </Paper>
 
-            {/* Submitted report display */}
+            {/* === Display Submitted Report with Summary === */}
             {submittedReport && (
                 <Box ref={reportRef} mt={4} p={3} bgcolor="#f9f9f9" borderRadius={2}>
                     <Typography variant="h6">Report Submitted</Typography>
@@ -251,6 +259,7 @@ const ScoutFormPage = ({ onSubmit }) => {
                     <Typography><strong>Projected Role:</strong> {submittedReport.role}</Typography>
                     <Typography><strong>Projected Ceiling:</strong> {submittedReport.ceiling}</Typography>
                     <Typography><strong>Draft Range:</strong> {submittedReport.range}</Typography>
+
                     <Box mt={2}>
                         <Typography variant="subtitle1">Trait Ratings:</Typography>
                         <ul>
@@ -259,6 +268,8 @@ const ScoutFormPage = ({ onSubmit }) => {
                             ))}
                         </ul>
                     </Box>
+
+                    {/* Auto-generated summary of the report */}
                     <SummaryGenerator report={submittedReport} />
                 </Box>
             )}
