@@ -36,7 +36,7 @@ Project Structure
 
 Key Pages
 
-- HomePage.jsx – Main "Big Board" view showing all prospects. Includes team/league filters, name search, and sorting by scout. Allows selecting players for comparison.
+- HomePage.jsx – Main "Big Board" view showing all prospects. Includes team/league filters, name search, display versions, and sorting by scout. Allows selecting players for comparison.
 - PlayerPage.jsx – Shows an individual player's profile, including bio, scout rankings, and navigation links.
 - StatsMeasurementsPage.jsx – Displays season-by-season/career averages/totals, game logs, and combine measurements. Includes development chart and filters for stats and seasons. Highlights game log *season highs* with gold stars.
 - ScoutFormPage.jsx – Interactive form for submitting new scouting reports. Features dropdowns, sliders, and multi-line inputs. Automatically generates AI-style scouting summary after submission.
@@ -102,7 +102,6 @@ Future Improvements
 
 - Add backend/API for report persistence across sessions.
 - Enable custom scout profiles and notes.
-- Add toggle between per-game vs total season stats.
 - Show percentile ranks for combine metrics.
 - Import/export player reports as PDF or JSON.
 - Integrate interview, medical, and psychological evaluation fields.
