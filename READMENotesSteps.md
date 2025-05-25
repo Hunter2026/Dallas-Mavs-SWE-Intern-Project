@@ -32,11 +32,12 @@ height, weight, and hometown. Along with this information, the user can see the 
 and submit scouting reports, with the user being able to see what they typed when they click submit. 
 
 When the user clicks on the player profile, they are able to see the player's true measurements and 
-statistics through game logs or in season stats. They are also able to filter which season the player has those game logs 
+statistics through game logs or in season stats/totals. They are also able to filter which season the player has those game logs 
 (there isn't enough game logs for more than one season but it's a nice feature for future purposes) and they have the ability
-to sort through stats in the game logs by most to least. 
+to sort through stats in the game logs by most to least. As well as being able to sort, the game logs have stars to indicate
+a season high in a particular stat. 
 
-Since we have career averages, season averages, and game logs, I decided to implement a player development chart over their career
+Since we have career averages/totals, season averages/totals, and game logs, I decided to implement a player development chart over their career
 to see increase or decrease in minutes, points, assists, total rebounds, steals and blocks. This way it is easy to see visually on whether
 a player's progression as been positive or negative.
 

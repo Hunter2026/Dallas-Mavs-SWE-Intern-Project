@@ -14,7 +14,9 @@ import {
     TableHead,
     TableRow,
     FormControl,
+    FormControlLabel,
     InputLabel,
+    Switch,
     Select,
     MenuItem,
     Button,
@@ -30,6 +32,8 @@ const StatsMeasurementsPage = () => {
     const [availableSeasons, setAvailableSeasons] = useState([]); // All seasons available for filtering
     const [selectedSeason, setSelectedSeason] = useState(null); // Currently selected season
     const [sortByStat, setSortByStat] = useState(null); // Game log sorting criterion
+    const [showStars, setShowStars] = useState(true); // Game log season high
+    const [perGameMode, setPerGameMode] = useState(true); // Player's seasonal/career total stats
 
     // === Fetch all data when component mounts ===
     useEffect(() => {
@@ -69,6 +73,16 @@ const StatsMeasurementsPage = () => {
     // === Filter game logs by selected season ===
     const filteredLogs = gameLogs.filter(g => g.season === selectedSeason);
     let displayedLogs = [...filteredLogs];
+
+    // === Define which stats to track for season highs ===
+    const highStatKeys = ['pts', 'reb', 'ast', 'stl', 'blk', 'tov'];
+
+    // === Calculate season highs from the displayed logs ===
+    const seasonHighs = {};
+    highStatKeys.forEach(stat => {
+        seasonHighs[stat] = Math.max(...displayedLogs.map(game => game[stat] ?? -Infinity));
+    });
+
 
     // === Optional sorting logic ===
     if (sortByStat) {
@@ -133,20 +147,50 @@ const StatsMeasurementsPage = () => {
                 </Paper>
             ) : <Typography>No measurements available for this player.</Typography>}
 
-            {/* === Career Averages (weighted by games played) === */}
-            <Typography variant="h4" gutterBottom>{player.name} – Career Averages</Typography>
+            {/* === Toggle for career stats mode === */}
+            <FormControlLabel
+                control={
+                    <Switch
+                        checked={perGameMode}
+                        onChange={(e) => setPerGameMode(e.target.checked)}
+                    />
+                }
+                label={perGameMode ? "Per Game Mode" : "Total Stats Mode"}
+                sx={{ mb: 2 }}
+            />
+
+            {/* === Career Averages / Totals Table === */}
+            <Typography variant="h4" gutterBottom>
+                {player.name} – Career {perGameMode ? "Averages" : "Totals"}
+            </Typography>
+
             {seasonLogs.length > 0 ? (() => {
                 const totalGP = seasonLogs.reduce((sum, s) => sum + s.GP, 0);
-                const weightedAvg = (key) => {
+
+                // Calculates totals or averages for numeric fields
+                const getCareerStat = (key) => {
+                    const isPercentage = key === 'FG%' || key === '3P%' || key === 'FTP';
+
+                    // Use GP-weighted average for all stats (even percentages)
                     const total = seasonLogs.reduce((sum, s) => sum + (s[key] ?? 0) * s.GP, 0);
-                    return totalGP > 0 ? (total / totalGP).toFixed(1) : '—';
+
+                    if (isPercentage) {
+                        // Always return percentage as weighted average
+                        return totalGP > 0 ? (total / totalGP).toFixed(1) : '—';
+                    }
+
+                    // Return total or per-game average based on toggle
+                    return perGameMode
+                        ? (totalGP > 0 ? (total / totalGP).toFixed(1) : '—')
+                        : Math.round(total);
                 };
+
                 return (
                     <TableContainer component={Paper} sx={{ mb: 6 }}>
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    {/* Table headers for stats */}
+                                    {/* Stat labels */}
                                     <TableCell>GP</TableCell><TableCell>MP</TableCell><TableCell>PTS</TableCell><TableCell>REB</TableCell><TableCell>AST</TableCell>
                                     <TableCell>STL</TableCell><TableCell>BLK</TableCell><TableCell>TOV</TableCell><TableCell>Fouls</TableCell>
                                     <TableCell>FG%</TableCell><TableCell>3P%</TableCell><TableCell>FT%</TableCell>
@@ -155,23 +199,25 @@ const StatsMeasurementsPage = () => {
                             <TableBody>
                                 <TableRow>
                                     <TableCell>{totalGP}</TableCell>
-                                    <TableCell>{weightedAvg('MP')}</TableCell>
-                                    <TableCell>{weightedAvg('PTS')}</TableCell>
-                                    <TableCell>{weightedAvg('TRB')}</TableCell>
-                                    <TableCell>{weightedAvg('AST')}</TableCell>
-                                    <TableCell>{weightedAvg('STL')}</TableCell>
-                                    <TableCell>{weightedAvg('BLK')}</TableCell>
-                                    <TableCell>{weightedAvg('TOV')}</TableCell>
-                                    <TableCell>{weightedAvg('PF')}</TableCell>
-                                    <TableCell>{weightedAvg('FG%')}</TableCell>
-                                    <TableCell>{weightedAvg('3P%')}</TableCell>
-                                    <TableCell>{weightedAvg('FTP')}</TableCell>
+                                    <TableCell>{getCareerStat('MP')}</TableCell>
+                                    <TableCell>{getCareerStat('PTS')}</TableCell>
+                                    <TableCell>{getCareerStat('TRB')}</TableCell>
+                                    <TableCell>{getCareerStat('AST')}</TableCell>
+                                    <TableCell>{getCareerStat('STL')}</TableCell>
+                                    <TableCell>{getCareerStat('BLK')}</TableCell>
+                                    <TableCell>{getCareerStat('TOV')}</TableCell>
+                                    <TableCell>{getCareerStat('PF')}</TableCell>
+                                    <TableCell>{getCareerStat('FG%')}</TableCell>
+                                    <TableCell>{getCareerStat('3P%')}</TableCell>
+                                    <TableCell>{getCareerStat('FTP')}</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
                     </TableContainer>
                 );
-            })() : <Typography>No season data available to calculate career averages.</Typography>}
+            })() : (
+                <Typography>No season data available to calculate career statistics.</Typography>
+            )}
 
             {/* === Player Development Chart === */}
             <PlayerDevelopment seasonLogs={seasonLogs} player={player} />
@@ -192,8 +238,22 @@ const StatsMeasurementsPage = () => {
                 </FormControl>
             )}
 
-            {/* === Season Averages for selected year === */}
-            <Typography variant="h4" gutterBottom>{player.name} – Season Averages</Typography>
+            {/* === Toggle for season stats mode === */}
+            <FormControlLabel
+                control={
+                    <Switch
+                        checked={perGameMode}
+                        onChange={(e) => setPerGameMode(e.target.checked)}
+                    />
+                }
+                label={perGameMode ? "Per Game Mode" : "Total Stats Mode"}
+                sx={{ mb: 2 }}
+            />
+
+            {/* === Season Averages / Totals Table === */}
+            <Typography variant="h4" gutterBottom>
+                {player.name} – Season {perGameMode ? "Averages" : "Totals"}
+            </Typography>
             {selectedSeason && (() => {
                 const logs = seasonLogs.filter(s => s.Season === selectedSeason);
                 return logs.length > 0 ? (
@@ -201,7 +261,7 @@ const StatsMeasurementsPage = () => {
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    {/* Column headers for per-season stats */}
+                                    {/* Stat labels */}
                                     <TableCell>Team</TableCell><TableCell>League</TableCell><TableCell>GP</TableCell><TableCell>MP</TableCell><TableCell>PTS</TableCell>
                                     <TableCell>REB</TableCell><TableCell>AST</TableCell><TableCell>STL</TableCell><TableCell>BLK</TableCell>
                                     <TableCell>TOV</TableCell><TableCell>Fouls</TableCell><TableCell>FG%</TableCell><TableCell>3P%</TableCell><TableCell>FT%</TableCell>
@@ -213,14 +273,30 @@ const StatsMeasurementsPage = () => {
                                         <TableCell>{seasonLog.Team}</TableCell>
                                         <TableCell>{seasonLog.League}</TableCell>
                                         <TableCell>{seasonLog.GP}</TableCell>
-                                        <TableCell>{seasonLog.MP}</TableCell>
-                                        <TableCell>{seasonLog.PTS}</TableCell>
-                                        <TableCell>{seasonLog.TRB}</TableCell>
-                                        <TableCell>{seasonLog.AST}</TableCell>
-                                        <TableCell>{seasonLog.STL}</TableCell>
-                                        <TableCell>{seasonLog.BLK}</TableCell>
-                                        <TableCell>{seasonLog.TOV}</TableCell>
-                                        <TableCell>{seasonLog.PF}</TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.MP : (seasonLog.MP * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.PTS : (seasonLog.PTS * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.TRB : (seasonLog.TRB * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.AST : (seasonLog.AST * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.STL : (seasonLog.STL * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.BLK : (seasonLog.BLK * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.TOV : (seasonLog.TOV * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
+                                        <TableCell>
+                                            {perGameMode ? seasonLog.PF : (seasonLog.PF * seasonLog.GP).toFixed(0)}
+                                        </TableCell>
                                         <TableCell>{seasonLog['FG%']}</TableCell>
                                         <TableCell>{seasonLog['3P%']}</TableCell>
                                         <TableCell>{seasonLog.FTP}</TableCell>
@@ -234,6 +310,16 @@ const StatsMeasurementsPage = () => {
 
             {/* === Game Logs with optional sorting === */}
             <Typography variant="h4" gutterBottom>{player.name} – Game Logs</Typography>
+            <FormControlLabel
+                control={
+                    <Switch
+                        checked={showStars}
+                        onChange={(e) => setShowStars(e.target.checked)}
+                    />
+                }
+                label="Highlight Season Highs ⭐"
+                sx={{ mb: 2 }}
+            />
             <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Sort By Stat</InputLabel>
                 <Select
@@ -280,12 +366,42 @@ const StatsMeasurementsPage = () => {
                                 <TableRow key={index}>
                                     <TableCell>{game.date.split(' ')[0]}</TableCell>
                                     <TableCell>{game.opponent}</TableCell>
-                                    <TableCell>{game.pts}</TableCell>
-                                    <TableCell>{game.reb}</TableCell>
-                                    <TableCell>{game.ast}</TableCell>
-                                    <TableCell>{game.stl}</TableCell>
-                                    <TableCell>{game.blk}</TableCell>
-                                    <TableCell>{game.tov}</TableCell>
+                                    <TableCell>
+                                        {game.pts}
+                                        {showStars && game.pts === seasonHighs.pts && (
+                                            <span style={{ marginLeft: 4 }}>⭐</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {game.reb}
+                                        {showStars && game.reb === seasonHighs.reb && (
+                                            <span style={{ marginLeft: 4 }}>⭐</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {game.ast}
+                                        {showStars && game.ast === seasonHighs.ast && (
+                                            <span style={{ marginLeft: 4 }}>⭐</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {game.stl}
+                                        {showStars && game.stl === seasonHighs.stl && (
+                                            <span style={{ marginLeft: 4 }}>⭐</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {game.blk}
+                                        {showStars && game.blk === seasonHighs.blk && (
+                                            <span style={{ marginLeft: 4 }}>⭐</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {game.tov}
+                                        {showStars && game.tov === seasonHighs.tov && (
+                                            <span style={{ marginLeft: 4 }}>⭐</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell>{game.plusMinus ?? '—'}</TableCell>
                                     <TableCell>{game.fgm}-{game.fga}</TableCell>
                                     <TableCell>{game.tpm ?? game['3PM']}-{game.tpa ?? game['3PA']}</TableCell>

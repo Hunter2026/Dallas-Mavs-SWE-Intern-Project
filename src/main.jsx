@@ -5,12 +5,12 @@ import ReactDOM from 'react-dom/client';
 // Main App
 import App from './App.jsx';
 
-// Global styles (optional)
+// Global styles
 import './style.css';
 
 // Material UI theming
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './theme'; // import your custom theme
+import theme from './theme'; // import custom theme
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

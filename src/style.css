@@ -94,3 +94,143 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* === Phone Mode Scaling: .mode-phone class targets all components === */
+
+.mode-phone {
+  font-size: 0.75rem;
+}
+
+/* Typography scaling */
+.mode-phone .MuiTypography-root,
+.mode-phone .MuiTypography-body1,
+.mode-phone .MuiTypography-body2 {
+  font-size: 0.8rem !important;
+}
+.mode-phone .MuiTypography-h4,
+.mode-phone .MuiTypography-h5,
+.mode-phone .MuiTypography-h6 {
+  font-size: 1rem !important;
+}
+
+/* Button adjustments */
+.mode-phone .MuiButton-root {
+  font-size: 0.7rem !important;
+  padding: 4px 8px !important;
+  min-width: 64px !important;
+}
+
+/* Table adjustments */
+.mode-phone .MuiTableCell-root {
+  font-size: 0.7rem !important;
+  padding: 4px 6px !important;
+}
+
+/* Input fields and dropdowns */
+.mode-phone .MuiInputBase-root {
+  font-size: 0.75rem !important;
+  padding: 4px 8px !important;
+}
+.mode-phone .MuiFormControl-root {
+  min-width: 140px !important;
+}
+
+/* Card layout */
+.mode-phone .MuiCard-root {
+  margin: 8px !important;
+}
+.mode-phone .MuiCardContent-root {
+  padding: 10px !important;
+}
+
+/* Grid layout */
+.mode-phone .MuiGrid-item {
+  padding: 8px !important;
+}
+.mode-phone .MuiGrid-root {
+  gap: 12px !important;
+}
+
+/* Images and logos */
+.mode-phone img {
+  max-height: 80px !important;
+  object-fit: contain;
+}
+
+/* Charts inside containers */
+.mode-phone .recharts-wrapper {
+  font-size: 0.7rem;
+}
+.mode-phone .recharts-tooltip-wrapper {
+  max-width: 220px;
+}
+
+/* === Tablet Mode Scaling: Slightly smaller than laptop, larger than phone === */
+
+.mode-tablet {
+  font-size: 0.9rem;
+}
+
+/* Typography scaling */
+.mode-tablet .MuiTypography-root,
+.mode-tablet .MuiTypography-body1,
+.mode-tablet .MuiTypography-body2 {
+  font-size: 0.95rem !important;
+}
+.mode-tablet .MuiTypography-h4,
+.mode-tablet .MuiTypography-h5,
+.mode-tablet .MuiTypography-h6 {
+  font-size: 1.2rem !important;
+}
+
+/* Button adjustments */
+.mode-tablet .MuiButton-root {
+  font-size: 0.85rem !important;
+  padding: 6px 12px !important;
+  min-width: 80px !important;
+}
+
+/* Table adjustments */
+.mode-tablet .MuiTableCell-root {
+  font-size: 0.85rem !important;
+  padding: 6px 8px !important;
+}
+
+/* Input fields and dropdowns */
+.mode-tablet .MuiInputBase-root {
+  font-size: 0.85rem !important;
+  padding: 6px 10px !important;
+}
+.mode-tablet .MuiFormControl-root {
+  min-width: 160px !important;
+}
+
+/* Card layout */
+.mode-tablet .MuiCard-root {
+  margin: 12px !important;
+}
+.mode-tablet .MuiCardContent-root {
+  padding: 16px !important;
+}
+
+/* Grid layout */
+.mode-tablet .MuiGrid-item {
+  padding: 10px !important;
+}
+.mode-tablet .MuiGrid-root {
+  gap: 16px !important;
+}
+
+/* Images and logos */
+.mode-tablet img {
+  max-height: 100px !important;
+  object-fit: contain;
+}
+
+/* Charts inside containers */
+.mode-tablet .recharts-wrapper {
+  font-size: 0.85rem;
+}
+.mode-tablet .recharts-tooltip-wrapper {
+  max-width: 300px;
+}
