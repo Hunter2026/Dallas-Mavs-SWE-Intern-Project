@@ -21,7 +21,7 @@ import {
 const roles = ['Starter', 'Role Player', 'Bench', 'Developmental'];
 const ceilings = ['Hall of Famer', 'All-NBA', 'All-Star', 'High-Level Starter', 'Starter', 'Rotation Player', 'Fringe Roster'];
 const draftRanges = ['Lottery', 'Mid 1st', 'Late 1st', '2nd Round', 'Undrafted'];
-const traits = ['Shooting', 'Ball Handling', 'Defense', 'Athleticism', 'IQ', 'Motor'];
+const traits = ['Shooting', 'Ball Handling', 'Playmaking', 'Defense', 'Athleticism', 'IQ', 'Motor'];
 
 const ScoutFormPage = ({ onSubmit }) => {
     const { id } = useParams(); // Get player ID from URL
