@@ -61,3 +61,5 @@ and bar chart form, offering a visual interpretation instead of text.
 Lastly, I implemented Material UI components all throughout my project, making the features easy to navigate and appealing to the user. 
 With the Material UI, I implemented a display toggle that will change the display for laptop, tablet, and phone users. 
 
+Executable: chmod +x deploy.sh
+Run it anytime: ./deploy.sh
