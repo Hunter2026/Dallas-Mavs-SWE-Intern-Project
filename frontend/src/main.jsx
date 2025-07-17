@@ -10,7 +10,7 @@ import './style.css';
 
 // Material UI theming
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './theme'; // import custom theme
+import theme from './theme.js'; // import custom theme
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

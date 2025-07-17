@@ -8,13 +8,6 @@ import SubmittedScoutReportPage from './pages/SubmittedScoutReportPage.jsx';
 import ComparePage from "./pages/ComparePage.jsx";
 
 function App() {
-    const [displayMode, setDisplayMode] = useState('laptop'); // 'laptop', 'tablet', 'phone'
-
-    // Update the body class based on selected mode
-    useEffect(() => {
-        document.body.classList.remove('mode-laptop', 'mode-tablet', 'mode-phone');
-        document.body.classList.add(`mode-${displayMode}`);
-    }, [displayMode]);
 
     return (
         <Router>
@@ -22,10 +15,7 @@ function App() {
                 <Route
                     path="/"
                     element={
-                        <HomePage
-                            displayMode={displayMode}
-                            setDisplayMode={setDisplayMode}
-                        />
+                        <HomePage/>
                     }
                 />
                 <Route path="/compare" element={<ComparePage />} />

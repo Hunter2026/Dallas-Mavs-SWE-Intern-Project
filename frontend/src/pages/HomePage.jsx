@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import PlayerCard from '../components/PlayerCard.jsx';
 
-const HomePage = ({ displayMode, setDisplayMode }) => {
+const HomePage = () => {
     // === State hooks for filters, sorting, and player comparison list ===
     const [players, setPlayers] = useState([]);               // Holds all players with merged bio and rankings
     const [sortBy, setSortBy] = useState('average');          // Current sorting criteria
@@ -115,26 +115,12 @@ const HomePage = ({ displayMode, setDisplayMode }) => {
                         src="/mavs.png"
                         alt="Mavericks Logo"
                         style={{
-                            height: 120,
+                            height: 80,
                             objectFit: 'contain'
                         }}
                     />
                 </Box>
             </Box>
-
-            {/* === Display Mode Selector === */}
-            <FormControl sx={{ minWidth: 200, mb: 3 }}>
-                <InputLabel>Display Mode</InputLabel>
-                <Select
-                    value={displayMode}
-                    label="Display Mode"
-                    onChange={(e) => setDisplayMode(e.target.value)}
-                >
-                    <MenuItem value="laptop">Laptop</MenuItem>
-                    <MenuItem value="tablet">Tablet</MenuItem>
-                    <MenuItem value="phone">Phone</MenuItem>
-                </Select>
-            </FormControl>
 
             {/* === Comparison Preview Banner === */}
             {compareList.length > 0 && (

@@ -48,12 +48,30 @@ const PlayerPage = () => {
     // === Show loading message while data is being fetched ===
     if (!player) return <Typography>Loading...</Typography>;
 
+    // === Utility: Extract YouTube video ID from either standard or shortened URL formats ===
+    const extractYoutubeId = (url) => {
+        try {
+            const urlObj = new URL(url);
+
+            // Handle shortened format like: https://youtu.be/VIDEO_ID
+            if (urlObj.hostname.includes("youtu.be")) {
+                return urlObj.pathname.slice(1); // Removes the leading slash and returns the video ID
+            }
+
+            // Handle standard format like: https://www.youtube.com/watch?v=VIDEO_ID
+            return urlObj.searchParams.get("v");
+        } catch {
+            // If the URL is invalid or cannot be parsed, return null
+            return null;
+        }
+    };
+
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
             {/* === NBA Draft Logo in Top Right === */}
             <Box sx={{ position: 'absolute', top: 100, right: 100 }}>
                 <img
-                    src="/NBA Draft.png"
+                    src="/nba_draft.png"
                     alt="NBA Draft Logo"
                     style={{ width: 300, height: 'auto' }}
                 />
@@ -147,7 +165,39 @@ const PlayerPage = () => {
                         </li>
                     );
                 })}
+
             </Box>
+            {/* === Highlight Reel === */}
+            {player.youtubeID && extractYoutubeId(player.youtubeID) && (
+                <Box mt={4}>
+                    <Typography variant="h6" gutterBottom>Highlight Reel</Typography>
+                    <Box
+                        sx={{
+                            position: 'relative',
+                            paddingBottom: '56.25%',
+                            height: 0,
+                            overflow: 'hidden',
+                            borderRadius: 2,
+                            boxShadow: 3
+                        }}
+                    >
+                        <iframe
+                            src={`https://www.youtube.com/embed/${extractYoutubeId(player.youtubeID)}`}
+                            title="Player Highlight"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%'
+                            }}
+                        />
+                    </Box>
+                </Box>
+            )}
         </Container>
     );
 };

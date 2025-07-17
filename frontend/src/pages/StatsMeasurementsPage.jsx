@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import PlayerDevelopment from '../components/PlayerDevelopment';
-import MeasurementComparison from '../components/MeasurementComparison';
+import PlayerDevelopment from '../components/PlayerDevelopment.jsx';
+import MeasurementComparison from '../components/MeasurementComparison.jsx';
 import {
     Container,
     Typography,
@@ -102,13 +102,13 @@ const StatsMeasurementsPage = () => {
         <Container maxWidth="lg" sx={{ py: 4 }}>
             {/* === NBA Draft Combine Logos === */}
             <Box sx={{ position: 'absolute', top: 16, right: 600 }}>
-                <img src="/NBA Draft Combine 1.png" alt="NBA Draft Combine Logo" style={{ width: 250 }} />
+                <img src="/nba_draft_combine1.png" alt="NBA Draft Combine Logo" style={{ width: 250 }} />
             </Box>
             <Box sx={{ position: 'absolute', top: 16, right: 300 }}>
-                <img src="/NBA Draft Combine 2.png" alt="NBA Draft Combine Logo" style={{ width: 280 }} />
+                <img src="/nba_draft_combine2.png" alt="NBA Draft Combine Logo" style={{ width: 280 }} />
             </Box>
             <Box sx={{ position: 'absolute', top: 16, right: 25 }}>
-                <img src="/NBA Draft Combine 3.png" alt="NBA Draft Combine Logo" style={{ width: 250 }} />
+                <img src="/nba_draft_combine3.png" alt="NBA Draft Combine Logo" style={{ width: 250 }} />
             </Box>
 
             {/* === Back Navigation === */}

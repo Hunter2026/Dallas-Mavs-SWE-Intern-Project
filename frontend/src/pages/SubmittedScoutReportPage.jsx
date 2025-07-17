@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import SummaryGenerator from '../components/SummaryGenerator';
+import SummaryGenerator from '../components/SummaryGenerator.jsx';
 import {
     Container,
     Typography,
@@ -61,7 +61,7 @@ const SubmittedScoutReportPage = () => {
             {/* === NBA Logo at Top Right === */}
             <Box sx={{ position: 'absolute', top: 16, right: 100 }}>
                 <img
-                    src="/Scouting Report Profile.png"
+                    src="/scouting_report_profile.png"
                     alt="Scouting Report Profile Logo"
                     style={{ width: 350, height: 'auto' }}
                 />
@@ -88,6 +88,11 @@ const SubmittedScoutReportPage = () => {
                     <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
                         <Typography variant="h6">Latest Report</Typography>
                         <Typography variant="body2" gutterBottom><strong>Submitted:</strong> {reports[0].createdAt}</Typography>
+                        {reports[0].reportTag && (
+                            <Typography variant="subtitle1" sx={{ mt: 1, mb: 1 }}>
+                                <strong>Tag:</strong> {reports[0].reportTag}
+                            </Typography>
+                        )}
                         <Typography><strong>Strengths:</strong> {reports[0].strengths}</Typography>
                         <Typography><strong>Weaknesses:</strong> {reports[0].weaknesses}</Typography>
                         <Typography><strong>Player Comparison:</strong> {reports[0].comparison}</Typography>
@@ -109,7 +114,7 @@ const SubmittedScoutReportPage = () => {
                         </Box>
 
                         {/* === Auto-Generated Summary Component === */}
-                        <SummaryGenerator report={reports[0]} />
+                        <SummaryGenerator report={reports[0]} scrollOnGenerate={false} />
 
                         {/* === Option to Delete the Latest Report === */}
                         <Button
@@ -134,8 +139,9 @@ const SubmittedScoutReportPage = () => {
                                     sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5' }}
                                 >
                                     <Typography variant="subtitle2" gutterBottom>
-                                        Submitted: {rep.createdAt}
+                                        <strong>Submitted</strong>: {rep.createdAt}
                                     </Typography>
+                                    <Typography variant="subtitle1" sx={{ mt: 1, mb: 1 }}> <strong>Tag:</strong> {rep.reportTag}</Typography>
                                     <Typography><strong>Strengths:</strong> {rep.strengths}</Typography>
                                     <Typography><strong>Weaknesses:</strong> {rep.weaknesses}</Typography>
                                     <Typography><strong>Player Comparison:</strong> {rep.comparison}</Typography>
@@ -157,14 +163,14 @@ const SubmittedScoutReportPage = () => {
                                     </Box>
 
                                     {/* Summary for older report */}
-                                    <SummaryGenerator report={rep} />
+                                    <SummaryGenerator report={rep} scrollOnGenerate={false} />
 
                                     {/* Delete button for older report */}
                                     <Button
                                         variant="outlined"
                                         color="error"
                                         size="small"
-                                        sx={{ mt: 1 }}
+                                        sx={{ mt: 4 }}
                                         onClick={() => handleDeleteReport(rep.createdAt)}
                                     >
                                         Delete Report
