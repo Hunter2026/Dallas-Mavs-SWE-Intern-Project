@@ -59,7 +59,7 @@ const ScoutFormPage = ({ onSubmit }) => {
     };
 
     // === Handle form submission ===
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Simple validation to ensure all fields are filled
@@ -88,15 +88,24 @@ const ScoutFormPage = ({ onSubmit }) => {
             ratings,
         };
 
-        // Callback if one exists
-        if (onSubmit) {
-            onSubmit(report);
-        } else {
-            console.log('Scouting Report:', report);
-        }
+        // === Generate summary before saving the report ===
+        try {
+            const response = await fetch("/summary", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(report),
+            });
 
-        // Save to state
-        setSubmittedReport(report);
+            if (response.ok) {
+                const data = await response.json();
+                report.summary = data.summary;
+            } else {
+                report.summary = "Summary generation failed.";
+            }
+        } catch (err) {
+            console.error("Summary generation error:", err);
+            report.summary = "Summary unavailable.";
+        }
 
         // Save to localStorage (persistent storage)
         const existing = localStorage.getItem(`report_player_${id}`);
@@ -109,6 +118,9 @@ const ScoutFormPage = ({ onSubmit }) => {
         }
         const updatedReports = [report, ...existingReports];
         localStorage.setItem(`report_player_${id}`, JSON.stringify(updatedReports));
+
+        // Save to state
+        setSubmittedReport(report);
 
         // Reset form
         setReportTag('');
@@ -305,7 +317,14 @@ const ScoutFormPage = ({ onSubmit }) => {
                     </Box>
 
                     {/* Auto-generated summary of the report */}
-                    <SummaryGenerator report={submittedReport} scrollOnGenerate={true} />
+                    <SummaryGenerator
+                        report={
+                            submittedReport && submittedReport.summary
+                                ? { ...submittedReport, summary: undefined }
+                                : submittedReport
+                        }
+                        scrollOnGenerate={true}
+                    />
                 </Box>
             )}
         </Container>

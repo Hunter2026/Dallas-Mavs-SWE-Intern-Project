@@ -1,5 +1,7 @@
-# Logs
-logs
+# ----------------------------------
+# Logs and temp files
+# ----------------------------------
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,15 +9,43 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ----------------------------------
+# Node.js (frontend)
+# ----------------------------------
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# ----------------------------------
+# Python (backend)
+# ----------------------------------
+backend/__pycache__/
+backend/*.py[cod]
+backend/.Python
+backend/env/
+backend/venv/
+*.pyc
+
+# ----------------------------------
+# Dist / compiled output
+# ----------------------------------
+dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
-.vscode/*
+# ----------------------------------
+# Environment variables / secrets
+# ----------------------------------
+.env
+backend/.env
+
+# ----------------------------------
+# IDE and system files
+# ----------------------------------
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,7 +53,9 @@ dist-ssr
 *.sln
 *.sw?
 
-# Elastic Beanstalk Files
+# ----------------------------------
+# Elastic Beanstalk
+# ----------------------------------
 .elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
+!.elasticbeanstalk/config.yml
+!.elasticbeanstalk/global.yml

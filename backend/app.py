@@ -17,6 +17,11 @@ def summary_api():
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # Return error if summary generation fails
 
+# === Alias Route for Frontend Compatibility ===
+@app.route('/generate-summary', methods=['POST'])
+def generate_summary_api():
+    return summary_api()
+
 # === Health Check Endpoint ===
 @app.route('/ping')
 def ping():

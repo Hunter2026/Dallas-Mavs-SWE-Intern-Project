@@ -1,33 +1,42 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Typography, Paper, CircularProgress } from '@mui/material';
-// === API Base URL Configuration ===
-import API_BASE_URL from '../apiConfig.js';
 
-// === Summary Generator Component ===
+// === SummaryGenerator Component ===
+// Displays a generated summary for a scouting report.
+// Shows a loading spinner while the summary is being generated.
+// Auto-scrolls to the summary when generation is complete.
+
 const SummaryGenerator = ({ report, scrollOnGenerate = false }) => {
-    const [summary, setSummary] = useState(report?.summary || ''); // Stores generated summary
-    const [loading, setLoading] = useState(false); // Tracks loading state
-    const summaryRef = useRef(null); // Ref to scroll to summary section
+    // === Component state ===
+    const [summary, setSummary] = useState(report?.summary || ''); // Holds the summary text
+    const [loading, setLoading] = useState(false); // Controls visibility of spinner/message
+    const summaryRef = useRef(null); // Used to scroll into view when done
 
-    // === Generate summary when report changes or scroll flag is set ===
+    // === Effect: Generate summary on mount or when report changes ===
     useEffect(() => {
         const generateSummary = async () => {
-            // If summary already exists in the report, use it
-            if (report?.summary) {
-                setSummary(report.summary);
-                return;
-            }
-
-            // Validate required report data before sending request
+            // === Guard: Ensure report has necessary identifiers ===
             if (!report?.createdAt || !report?.playerId) {
                 console.warn("Missing createdAt or playerId. Skipping summary generation.");
                 return;
             }
 
-            setLoading(true); // Show spinner
+            setLoading(true); // Show spinner/message
 
             try {
-                // === API Call: POST report to generate summary ===
+                // === If cached summary exists, use it and simulate loading ===
+                if (report?.summary) {
+                    setTimeout(() => {
+                        setSummary(report.summary);
+                        setLoading(false);
+                        if (scrollOnGenerate && summaryRef.current) {
+                            summaryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 500); // Short delay for user feedback
+                    return;
+                }
+
+                // === Otherwise, fetch new summary from API ===
                 const res = await fetch("/summary", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -40,25 +49,24 @@ const SummaryGenerator = ({ report, scrollOnGenerate = false }) => {
                 setSummary(newSummary);
                 setLoading(false);
 
-                // === Auto-scroll to summary section if enabled ===
-                if (scrollOnGenerate && summaryRef.current) {
-                    setTimeout(() => {
+                // === Scroll to summary after generation ===
+                setTimeout(() => {
+                    if (scrollOnGenerate && summaryRef.current) {
                         summaryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100); // Delay allows render to complete first
-                }
+                    }
+                }, 150);
 
-                // === Save updated summary in localStorage ===
+                // === Save the generated summary to localStorage ===
                 const key = `report_player_${report.playerId}`;
+                const raw = localStorage.getItem(key);
                 let existingReports = [];
 
                 try {
-                    const raw = localStorage.getItem(key);
                     existingReports = JSON.parse(raw) || [];
                 } catch {
                     existingReports = [];
                 }
 
-                // Update the relevant report entry with the new summary
                 const updatedReports = existingReports.map(r =>
                     r.createdAt === report.createdAt ? { ...r, summary: newSummary } : r
                 );
@@ -66,31 +74,26 @@ const SummaryGenerator = ({ report, scrollOnGenerate = false }) => {
                 localStorage.setItem(key, JSON.stringify(updatedReports));
             } catch (err) {
                 console.error("Error generating summary:", err);
-                setLoading(false); // Hide spinner on failure
+                setLoading(false);
             }
         };
 
         generateSummary();
-    }, [
-        report?.createdAt,
-        report?.playerId,
-        report?.summary,
-        scrollOnGenerate
-    ]);
+    }, [report?.createdAt, report?.playerId, report?.summary, scrollOnGenerate]);
 
     return (
         <div ref={summaryRef}>
-            {/* === Loading Spinner While Summary is Being Fetched === */}
+            {/* === Show spinner and message while summary is loading === */}
             {loading && (
-                <Paper elevation={2} sx={{ mt: 3, p: 2, textAlign: 'center' }}>
-                    <CircularProgress size={24} />
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                        Generating Report...
+                <Paper elevation={2} sx={{ mt: 3, p: 3, textAlign: 'center' }}>
+                    <CircularProgress size={30} />
+                    <Typography variant="body1" sx={{ mt: 2, fontWeight: 'bold' }}>
+                        Generating Summary...
                     </Typography>
                 </Paper>
             )}
 
-            {/* === Render Summary Box When Ready === */}
+            {/* === Display generated summary once loading is complete === */}
             {!loading && summary && (
                 <Paper elevation={2} sx={{ mt: 3, p: 2, backgroundColor: '#eef4ff', borderRadius: 2 }}>
                     <Typography variant="h6" gutterBottom>Scouting Summary</Typography>
