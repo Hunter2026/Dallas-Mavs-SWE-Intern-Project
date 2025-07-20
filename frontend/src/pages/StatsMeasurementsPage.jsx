@@ -100,26 +100,62 @@ const StatsMeasurementsPage = () => {
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            {/* === NBA Draft Combine Logos === */}
-            <Box sx={{ position: 'absolute', top: 16, right: 600 }}>
-                <img src="/nba_draft_combine1.png" alt="NBA Draft Combine Logo" style={{ width: 250 }} />
-            </Box>
-            <Box sx={{ position: 'absolute', top: 16, right: 300 }}>
-                <img src="/nba_draft_combine2.png" alt="NBA Draft Combine Logo" style={{ width: 280 }} />
-            </Box>
-            <Box sx={{ position: 'absolute', top: 16, right: 25 }}>
-                <img src="/nba_draft_combine3.png" alt="NBA Draft Combine Logo" style={{ width: 250 }} />
-            </Box>
-
-            {/* === Back Navigation === */}
-            <Box mb={2}>
+            {/* === Back Button === */}
+            <Box mb={1}>
                 <Button component={Link} to={`/player/${player.playerId}`} variant="outlined">
                     ← Back to Player Profile
                 </Button>
             </Box>
 
+            {/* === Measurements Title === */}
+            <Box
+                sx={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    position: 'relative',
+                    mt: 3,
+                    mb: 2,
+                }}
+            >
+                <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 500, fontSize: { xs: '1.25rem', sm: '2.25rem' } }}
+                >
+                    {player.name} – Measurements
+                </Typography>
+
+                {/* Draft Logos */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        right: 0,
+                        display: { xs: 'none', sm: 'flex' },
+                        gap: { sm: 1.5, md: 2, lg: 3 },
+                    }}
+                >
+                    <Box
+                        component="img"
+                        src="/nba_draft_combine1.png"
+                        alt="Combine 1"
+                        sx={{ width: { sm: 80, md: 110, lg: 140 }, height: 'auto' }}
+                    />
+                    <Box
+                        component="img"
+                        src="/nba_draft_combine2.png"
+                        alt="Combine 2"
+                        sx={{ width: { sm: 80, md: 110, lg: 140 }, height: 'auto' }}
+                    />
+                    <Box
+                        component="img"
+                        src="/nba_draft_combine3.png"
+                        alt="Combine 3"
+                        sx={{ width: { sm: 80, md: 110, lg: 140 }, height: 'auto' }}
+                    />
+                </Box>
+            </Box>
+
             {/* === Physical Measurements === */}
-            <Typography variant="h4" gutterBottom>{player.name} – Measurements</Typography>
             <Button component={Link} to={`/player/${id}/scouting`} variant="contained" sx={{ mb: 2 }}>
                 Write Scouting Report
             </Button>

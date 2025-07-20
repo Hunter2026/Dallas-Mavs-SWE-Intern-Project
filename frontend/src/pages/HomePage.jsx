@@ -104,23 +104,40 @@ const HomePage = () => {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             {/* === Title and Top Logo === */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" fontWeight={600}>
-                    NBA Draft Big Board
-                </Typography>
-
-                {/* Mavericks logo positioned in top-right corner */}
-                <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
-                    <img
-                        src="/mavs.png"
-                        alt="Mavericks Logo"
-                        style={{
-                            height: 80,
-                            objectFit: 'contain'
-                        }}
-                    />
-                </Box>
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    display: { xs: 'none', sm: 'block' },
+                    width: { sm: 60, md: 100, lg: 140, xl: 180 },
+                }}
+            >
+                <Box
+                    component="img"
+                    src="/mavs.png"
+                    alt="Mavericks Logo"
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                        objectFit: 'contain',
+                    }}
+                />
             </Box>
+
+            {/* Title */}
+            <Typography
+                variant="h3"
+                align="center"
+                sx={{
+                    mt: { xs: 4, md: 2 },
+                    mb: 4,
+                    fontWeight: 600,
+                    fontSize: { xs: '1.75rem', md: '2.5rem' },
+                }}
+            >
+                NextUp NBA Draft Hub
+            </Typography>
 
             {/* === Comparison Preview Banner === */}
             {compareList.length > 0 && (

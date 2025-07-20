@@ -69,11 +69,23 @@ const PlayerPage = () => {
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
             {/* === NBA Draft Logo in Top Right === */}
-            <Box sx={{ position: 'absolute', top: 100, right: 100 }}>
-                <img
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 100,
+                    right: 16,
+                    display: { xs: 'none', sm: 'block' }, // hide on phones
+                    width: { sm: 180, md: 250, lg: 300, xl: 350 }, // scale for screen size
+                }}
+            >
+                <Box
+                    component="img"
                     src="/nba_draft.png"
                     alt="NBA Draft Logo"
-                    style={{ width: 300, height: 'auto' }}
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                    }}
                 />
             </Box>
 
@@ -94,10 +106,20 @@ const PlayerPage = () => {
                                 <Avatar
                                     src={player.photoUrl}
                                     alt={player.name}
-                                    sx={{ width: 150, height: 150, mx: 'auto' }}
+                                    sx={{
+                                        width: { xs: 100, sm: 120, md: 150 },
+                                        height: { xs: 100, sm: 120, md: 150 },
+                                        mx: 'auto',
+                                    }}
                                 />
                             ) : (
-                                <Avatar sx={{ width: 150, height: 150, mx: 'auto' }}>
+                                <Avatar
+                                    sx={{
+                                        width: { xs: 100, sm: 120, md: 150 },
+                                        height: { xs: 100, sm: 120, md: 150 },
+                                        mx: 'auto',
+                                    }}
+                                >
                                     {player.name[0]}
                                 </Avatar>
                             )}

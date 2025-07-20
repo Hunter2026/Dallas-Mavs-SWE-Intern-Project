@@ -57,13 +57,25 @@ const SubmittedScoutReportPage = () => {
     };
 
     return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
+        <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 }, px: { xs: 2, md: 3 } }}>
             {/* === NBA Logo at Top Right === */}
-            <Box sx={{ position: 'absolute', top: 16, right: 100 }}>
-                <img
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    display: { xs: 'none', sm: 'block' }, // hide on phones
+                    width: { sm: '180px', md: '300px', lg: '350px', xl: '400px' }, // responsive scaling
+                }}
+            >
+                <Box
+                    component="img"
                     src="/scouting_report_profile.png"
-                    alt="Scouting Report Profile Logo"
-                    style={{ width: 350, height: 'auto' }}
+                    alt="Scouting Report Profile"
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                    }}
                 />
             </Box>
 
@@ -75,7 +87,7 @@ const SubmittedScoutReportPage = () => {
             </Box>
 
             {/* === Page Header === */}
-            <Typography variant="h4" gutterBottom>
+            <Typography variant="h4" sx={{ mt: { xs: 8, md: 0 } }} gutterBottom>
                 {player ? `${player.name} – Scouting Reports` : 'Scouting Reports'}
             </Typography>
 

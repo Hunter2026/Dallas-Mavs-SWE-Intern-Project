@@ -62,7 +62,6 @@ const ScoutFormPage = ({ onSubmit }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Simple validation to ensure all fields are filled
         if (
             !reportTag || !strengths.trim() || !weaknesses.trim() || !intangibles.trim() || !comparison.trim() || !fit.trim() ||
             !role || !ceiling || !range ||
@@ -72,7 +71,7 @@ const ScoutFormPage = ({ onSubmit }) => {
             return;
         }
 
-        // Construct report object
+        // Create initial report without summary
         const report = {
             playerId: player.playerId,
             createdAt: new Date().toLocaleString(),
@@ -88,7 +87,33 @@ const ScoutFormPage = ({ onSubmit }) => {
             ratings,
         };
 
-        // === Generate summary before saving the report ===
+        // Save immediately to UI and localStorage
+        const existing = localStorage.getItem(`report_player_${id}`);
+        let existingReports = [];
+        try {
+            const parsed = JSON.parse(existing);
+            existingReports = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+            existingReports = [];
+        }
+        const updatedReports = [report, ...existingReports];
+        localStorage.setItem(`report_player_${id}`, JSON.stringify(updatedReports));
+        setSubmittedReport(report);
+
+        // Reset form inputs
+        setReportTag('');
+        setStrengths('');
+        setWeaknesses('');
+        setIntangibles('');
+        setComparison('');
+        setFit('');
+        setRole('');
+        setCeiling('');
+        setRange('');
+        setRatings(traits.reduce((acc, t) => ({ ...acc, [t]: 5 }), {}));
+        setError(null);
+
+        // Generate summary in background
         try {
             const response = await fetch("/summary", {
                 method: "POST",
@@ -107,43 +132,19 @@ const ScoutFormPage = ({ onSubmit }) => {
             report.summary = "Summary unavailable.";
         }
 
-        // Save to localStorage (persistent storage)
-        const existing = localStorage.getItem(`report_player_${id}`);
-        let existingReports = [];
-        try {
-            const parsed = JSON.parse(existing);
-            existingReports = Array.isArray(parsed) ? parsed : [parsed];
-        } catch {
-            existingReports = [];
-        }
-        const updatedReports = [report, ...existingReports];
-        localStorage.setItem(`report_player_${id}`, JSON.stringify(updatedReports));
-
-        // Save to state
-        setSubmittedReport(report);
-
-        // Reset form
-        setReportTag('');
-        setStrengths('');
-        setWeaknesses('');
-        setIntangibles('');
-        setComparison('');
-        setFit('');
-        setRole('');
-        setCeiling('');
-        setRange('');
-        setRatings(traits.reduce((acc, t) => ({ ...acc, [t]: 5 }), {}));
-        setError(null);
+        // Save updated report with summary
+        const updatedFinalReports = [report, ...existingReports];
+        localStorage.setItem(`report_player_${id}`, JSON.stringify(updatedFinalReports));
+        setSubmittedReport({ ...report });
     };
+
 
     // === Scroll to report after it's submitted ===
     useEffect(() => {
         if (submittedReport && reportRef.current) {
-            setTimeout(() => {
-                requestAnimationFrame(() => {
-                    reportRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                });
-            }, 150);
+            requestAnimationFrame(() => {
+                reportRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            });
         }
     }, [submittedReport]);
 
@@ -151,13 +152,25 @@ const ScoutFormPage = ({ onSubmit }) => {
     if (!player) return <Typography>Loading player info...</Typography>;
 
     return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
+        <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 }, px: { xs: 2, md: 3 } }}>
             {/* === NBA Scout Report Logo === */}
-            <Box sx={{ position: 'absolute', top: 16, right: 100 }}>
-                <img
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    display: { xs: 'none', sm: 'block' }, // hide on phones
+                    width: { sm: '180px', md: '300px', lg: '350px', xl: '400px' }, // larger on big screens
+                }}
+            >
+                <Box
+                    component="img"
                     src="/nba_scout_report.png"
                     alt="NBA Scout Report Logo"
-                    style={{ width: 350, height: 'auto' }}
+                    sx={{
+                        width: '100%',
+                        height: 'auto',
+                    }}
                 />
             </Box>
 
@@ -193,7 +206,7 @@ const ScoutFormPage = ({ onSubmit }) => {
                 </Select>
             </FormControl>
 
-            <Paper sx={{ p: 3 }} component="form" onSubmit={handleSubmit}>
+            <Paper sx={{ px: { xs: 2, sm: 3 }, py: 3 }} component="form" onSubmit={handleSubmit}>
                 <Typography variant="h6" gutterBottom>Scouting Evaluation</Typography>
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -272,8 +285,8 @@ const ScoutFormPage = ({ onSubmit }) => {
                 <Box mt={4}>
                     <Typography variant="subtitle1" gutterBottom>Trait Ratings (0–10)</Typography>
                     {traits.map(trait => (
-                        <Box key={trait} sx={{ mb: 2 }}>
-                            <Typography gutterBottom>{trait}: {ratings[trait]}</Typography>
+                        <Box key={trait} sx={{ mb: 3 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{trait}: {ratings[trait]}</Typography>
                             <Slider
                                 value={ratings[trait]}
                                 min={0}
