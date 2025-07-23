@@ -22,11 +22,6 @@ def summary_api():
 def generate_summary_api():
     return summary_api()
 
-# === Health Check Endpoint ===
-@app.route('/ping')
-def ping():
-    return 'pong', 200
-
 # === Serve the Root of the React App (index.html) ===
 @app.route('/')
 def serve_root():

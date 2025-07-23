@@ -18,7 +18,7 @@ const PlayerPage = () => {
 
     // === Fetch player data when component mounts or when `id` changes ===
     useEffect(() => {
-        fetch('/intern_project_data.json')
+        fetch('/project_data.json')
             .then(res => res.json())
             .then(data => {
                 // Find the player bio by matching playerId from URL

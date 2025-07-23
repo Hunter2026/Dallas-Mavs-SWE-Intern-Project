@@ -37,7 +37,7 @@ const StatsMeasurementsPage = () => {
 
     // === Fetch all data when component mounts ===
     useEffect(() => {
-        fetch('/intern_project_data.json')
+        fetch('/project_data.json')
             .then(res => res.json())
             .then(data => {
                 // Player bio

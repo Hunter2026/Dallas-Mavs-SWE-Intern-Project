@@ -32,7 +32,7 @@ const HomePage = () => {
 
     // === Load player data from JSON file and populate filters/sort players ===
     useEffect(() => {
-        fetch('/intern_project_data.json')
+        fetch('/project_data.json')
             .then((res) => res.json())
             .then((data) => {
                 // Merge bio and rankings into a single object per player

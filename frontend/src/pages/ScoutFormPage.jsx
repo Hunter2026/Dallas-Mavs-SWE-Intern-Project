@@ -45,7 +45,7 @@ const ScoutFormPage = ({ onSubmit }) => {
 
     // === Fetch player bio on page load ===
     useEffect(() => {
-        fetch('/intern_project_data.json')
+        fetch('/project_data.json')
             .then(res => res.json())
             .then(data => {
                 const foundPlayer = data.bio.find(p => p.playerId.toString() === id);

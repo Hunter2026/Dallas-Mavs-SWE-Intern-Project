@@ -41,7 +41,7 @@ const SubmittedScoutReportPage = () => {
 
     // === Fetch player bio information for display (name, etc.) ===
     useEffect(() => {
-        fetch('/intern_project_data.json')
+        fetch('/project_data.json')
             .then(res => res.json())
             .then(data => {
                 const found = data.bio.find(p => p.playerId.toString() === id);

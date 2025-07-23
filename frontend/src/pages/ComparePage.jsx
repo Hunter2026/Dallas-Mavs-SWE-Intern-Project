@@ -26,7 +26,7 @@ const ComparePage = () => {
 
     // === Fetch player, measurement, and season data when IDs change ===
     useEffect(() => {
-        fetch('/intern_project_data.json')
+        fetch('/project_data.json')
             .then(res => res.json())
             .then(data => {
                 const selectedPlayers = data.bio.filter(p => ids.includes(p.playerId.toString()));
